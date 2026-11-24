@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>清平乐</title>
+    <title>蝶梦袅袅</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: sans-serif; background: #f0f2f5; color: #333; padding-bottom: 60px; }
@@ -24,17 +24,26 @@
         .nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 60px; background: white; display: flex; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
         .nav-item { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 12px; color: #888; }
         .nav-item.active { color: #2b7a78; font-weight: bold; }
+        
+        /* 图片列表样式 */
+        .img-list { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
+        .img-box { position: relative; width: 100%; border-radius: 6px; overflow: hidden; }
+        .img-box img { width: 100%; display: block; }
+        .img-box .del-btn { position: absolute; top: 5px; right: 5px; }
     </style>
 </head>
 <body>
-<div class="header">清平乐 · 情义帮</div>
+<div class="header">蝶梦袅袅</div>
 <div class="content">
+    <!-- 清平准则 -->
     <div id="tab1" class="tab active">
         <div class="card">
             <h3>清平准则</h3>
-            <textarea id="rules" placeholder="1.本知好帅2.欺负全服3被全服欺负4.全服被欺负" style="height: 300px;"></textarea>
+            <textarea id="rules" placeholder="输入帮会规则..." style="height: 300px;"></textarea>
         </div>
     </div>
+    
+    <!-- 帮战接龙 -->
     <div id="tab2" class="tab">
         <div class="card">
             <h3>帮战接龙 (槿)</h3>
@@ -43,30 +52,37 @@
             <div id="signupList" style="margin-top: 15px;"></div>
         </div>
     </div>
+    
+    <!-- 图片视频 (改成相册上传) -->
     <div id="tab3" class="tab">
         <div class="card">
-            <h3>素材链接 (莳)</h3>
-            <input type="text" id="mediaTitle" placeholder="素材标题（如：周末帮战录屏）">
-            <input type="text" id="mediaUrl" placeholder="粘贴网页图片/视频的网址链接">
-            <button onclick="addMedia()">添加收藏</button>
-            <div id="mediaList" style="margin-top: 15px;"></div>
+            <h3>帮会图片 (莳)</h3>
+            <p style="font-size:12px; color:#e74c3c; margin-bottom:10px;">提示：只能上传小图片，大图会导致手机卡顿存不下。</p>
+            <input type="file" id="imageUpload" accept="image/*" style="display:none;" onchange="uploadImage(event)">
+            <button onclick="document.getElementById('imageUpload').click()">从相册选择图片</button>
+            <div id="imageList" class="img-list"></div>
         </div>
     </div>
+    
+    <!-- 花繁若轩 -->
     <div id="tab4" class="tab">
         <div class="card">
-            <h3>帮会朋友圈 (寰)</h3>
+            <h3>花繁若轩 (寰)</h3>
             <textarea id="postContent" placeholder="分享点什么给帮众吧..." style="height: 80px;"></textarea>
             <button onclick="addPost()">发布动态</button>
             <div id="postList" style="margin-top: 15px;"></div>
         </div>
     </div>
 </div>
+
+<!-- 底部导航 -->
 <div class="nav">
     <div class="nav-item active" onclick="switchTab(1)">清平准则</div>
     <div class="nav-item" onclick="switchTab(2)">帮战接龙</div>
-    <div class="nav-item" onclick="switchTab(3)">图片视频</div>
-    <div class="nav-item" onclick="switchTab(4)">朋友圈</div>
+    <div class="nav-item" onclick="switchTab(3)">帮会图片</div>
+    <div class="nav-item" onclick="switchTab(4)">花繁若轩</div>
 </div>
+
 <script>
     function switchTab(num) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -74,9 +90,13 @@
         document.getElementById('tab' + num).classList.add('active');
         document.querySelectorAll('.nav-item')[num - 1].classList.add('active');
     }
+    
+    // 帮规
     var rulesInput = document.getElementById('rules');
-    rulesInput.value = localStorage.getItem('ql_rules') || '1. 禁止恶意抢商人。\n2. 帮战请假提前群里说。\n3. 踢人前先问大当家。';
+    rulesInput.value = localStorage.getItem('ql_rules') || '1. 欺负全服\n2. 被全服欺负\n3. 被欺负全服\n4. 本知好帅';
     rulesInput.addEventListener('input', function() { localStorage.setItem('ql_rules', this.value); });
+
+    // 接龙
     var signups = JSON.parse(localStorage.getItem('ql_signups') || '[]');
     function renderSignups() {
         var html = '';
@@ -89,21 +109,43 @@
         if(name) { signups.push(name); localStorage.setItem('ql_signups', JSON.stringify(signups)); document.getElementById('signupName').value = ''; renderSignups(); }
     }
     function delSignup(index) { signups.splice(index, 1); localStorage.setItem('ql_signups', JSON.stringify(signups)); renderSignups(); }
-    var medias = JSON.parse(localStorage.getItem('ql_medias') || '[]');
-    function renderMedias() {
+
+    // 图片 (从本地相册上传)
+    var images = JSON.parse(localStorage.getItem('ql_images') || '[]');
+    function renderImages() {
         var html = '';
-        if(medias.length === 0) html = '<div style="color:#999;font-size:14px;text-align:center;">暂无素材</div>';
-        medias.forEach((item, index) => {
-            html += `<div class="list-item"><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%;"><a href="${item.url}" target="_blank" style="color:#2b7a78;text-decoration:none;">${item.title}</a></div><button class="del-btn" onclick="delMedia(${index})">删除</button></div>`;
+        if(images.length === 0) html = '<div style="color:#999;font-size:14px;text-align:center;width:100%;">暂无图片</div>';
+        images.forEach((base64, index) => {
+            html += `<div class="img-box"><img src="${base64}"><button class="del-btn" onclick="delImage(${index})">删除</button></div>`;
         });
-        document.getElementById('mediaList').innerHTML = html;
+        document.getElementById('imageList').innerHTML = html;
     }
-    function addMedia() {
-        var title = document.getElementById('mediaTitle').value.trim();
-        var url = document.getElementById('mediaUrl').value.trim();
-        if(title && url) { medias.push({title: title, url: url}); localStorage.setItem('ql_medias', JSON.stringify(medias)); document.getElementById('mediaTitle').value = ''; document.getElementById('mediaUrl').value = ''; renderMedias(); }
+    function uploadImage(event) {
+        var file = event.target.files[0];
+        if(!file) return;
+        
+        // 简单限制：超过 1MB 提醒用户，防止内存爆掉
+        if(file.size > 1024 * 1024) {
+            alert("图片太大了！请选择小于1MB的图片，否则手机会卡死。");
+            return;
+        }
+
+        var reader = new FileReader();
+        reader.onload = function(e) {
+            images.push(e.target.result);
+            localStorage.setItem('ql_images', JSON.stringify(images));
+            renderImages();
+            document.getElementById('imageUpload').value = '';
+        };
+        reader.readAsDataURL(file);
     }
-    function delMedia(index) { medias.splice(index, 1); localStorage.setItem('ql_medias', JSON.stringify(medias)); renderMedias(); }
+    function delImage(index) {
+        images.splice(index, 1);
+        localStorage.setItem('ql_images', JSON.stringify(images));
+        renderImages();
+    }
+
+    // 花繁若轩 (朋友圈)
     var posts = JSON.parse(localStorage.getItem('ql_posts') || '[]');
     function renderPosts() {
         var html = '';
@@ -118,7 +160,8 @@
         if(content) { var time = new Date().toLocaleString(); posts.unshift({content: content, time: time}); localStorage.setItem('ql_posts', JSON.stringify(posts)); document.getElementById('postContent').value = ''; renderPosts(); }
     }
     function delPost(index) { posts.splice(index, 1); localStorage.setItem('ql_posts', JSON.stringify(posts)); renderPosts(); }
-    window.onload = function() { renderSignups(); renderMedias(); renderPosts(); };
+
+    window.onload = function() { renderSignups(); renderImages(); renderPosts(); };
 </script>
 </body>
-        </html>
+</html>
