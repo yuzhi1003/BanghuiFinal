@@ -2,21 +2,123 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>帮会交接清单</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>清平乐</title>
     <style>
-        body { font-family: sans-serif; background: #f4f5f7; padding: 20px; text-align: center; }
-        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        h1 { color: #333; font-size: 24px; }
-        p { color: #666; font-size: 14px; }
-        button { background: #07c160; color: white; border: none; padding: 10px 20px; border-radius: 5px; font-size: 16px; margin-top: 10px; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: sans-serif; background: #f0f2f5; color: #333; padding-bottom: 60px; }
+        .header { background: #2b7a78; color: white; padding: 15px; text-align: center; font-size: 18px; font-weight: bold; position: sticky; top: 0; z-index: 10; }
+        .content { padding: 15px; }
+        .tab { display: none; }
+        .tab.active { display: block; }
+        .card { background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        h3 { margin-bottom: 10px; color: #2b7a78; font-size: 16px; border-left: 3px solid #2b7a78; padding-left: 8px; }
+        textarea, input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 10px; font-size: 14px; outline: none; }
+        textarea:focus, input[type="text"]:focus { border-color: #2b7a78; }
+        button { background: #2b7a78; color: white; border: none; padding: 10px 15px; border-radius: 6px; font-size: 14px; width: 100%; font-weight: bold; }
+        button:active { background: #17252a; }
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
+        .list-item:last-child { border-bottom: none; }
+        .list-item span { font-size: 14px; }
+        .del-btn { background: #e74c3c; padding: 5px 10px; font-size: 12px; width: auto; border-radius: 4px; }
+        .nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 60px; background: white; display: flex; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
+        .nav-item { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 12px; color: #888; }
+        .nav-item.active { color: #2b7a78; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h1>情义帮 · 交接清单</h1>
-        <p>大当家专属管理工具（测试版）</p>
-        <button onclick="alert('APP正在开发中！')">点击测试</button>
+<div class="header">清平乐 · 情义帮</div>
+<div class="content">
+    <div id="tab1" class="tab active">
+        <div class="card">
+            <h3>清平准则</h3>
+            <textarea id="rules" placeholder="输入帮会规则，自动保存..." style="height: 300px;"></textarea>
+        </div>
     </div>
+    <div id="tab2" class="tab">
+        <div class="card">
+            <h3>帮战接龙 (槿)</h3>
+            <input type="text" id="signupName" placeholder="输入游戏ID，点击报名">
+            <button onclick="addSignup()">接龙报名</button>
+            <div id="signupList" style="margin-top: 15px;"></div>
+        </div>
+    </div>
+    <div id="tab3" class="tab">
+        <div class="card">
+            <h3>素材链接 (莳)</h3>
+            <input type="text" id="mediaTitle" placeholder="素材标题（如：周末帮战录屏）">
+            <input type="text" id="mediaUrl" placeholder="粘贴网页图片/视频的网址链接">
+            <button onclick="addMedia()">添加收藏</button>
+            <div id="mediaList" style="margin-top: 15px;"></div>
+        </div>
+    </div>
+    <div id="tab4" class="tab">
+        <div class="card">
+            <h3>帮会朋友圈 (寰)</h3>
+            <textarea id="postContent" placeholder="分享点什么给帮众吧..." style="height: 80px;"></textarea>
+            <button onclick="addPost()">发布动态</button>
+            <div id="postList" style="margin-top: 15px;"></div>
+        </div>
+    </div>
+</div>
+<div class="nav">
+    <div class="nav-item active" onclick="switchTab(1)">清平准则</div>
+    <div class="nav-item" onclick="switchTab(2)">帮战接龙</div>
+    <div class="nav-item" onclick="switchTab(3)">图片视频</div>
+    <div class="nav-item" onclick="switchTab(4)">朋友圈</div>
+</div>
+<script>
+    function switchTab(num) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        document.getElementById('tab' + num).classList.add('active');
+        document.querySelectorAll('.nav-item')[num - 1].classList.add('active');
+    }
+    var rulesInput = document.getElementById('rules');
+    rulesInput.value = localStorage.getItem('ql_rules') || '1. 禁止恶意抢商人。\n2. 帮战请假提前群里说。\n3. 踢人前先问大当家。';
+    rulesInput.addEventListener('input', function() { localStorage.setItem('ql_rules', this.value); });
+    var signups = JSON.parse(localStorage.getItem('ql_signups') || '[]');
+    function renderSignups() {
+        var html = '';
+        if(signups.length === 0) html = '<div style="color:#999;font-size:14px;text-align:center;">暂无报名</div>';
+        signups.forEach((name, index) => { html += `<div class="list-item"><span>${index+1}. ${name}</span><button class="del-btn" onclick="delSignup(${index})">取消</button></div>`; });
+        document.getElementById('signupList').innerHTML = html;
+    }
+    function addSignup() {
+        var name = document.getElementById('signupName').value.trim();
+        if(name) { signups.push(name); localStorage.setItem('ql_signups', JSON.stringify(signups)); document.getElementById('signupName').value = ''; renderSignups(); }
+    }
+    function delSignup(index) { signups.splice(index, 1); localStorage.setItem('ql_signups', JSON.stringify(signups)); renderSignups(); }
+    var medias = JSON.parse(localStorage.getItem('ql_medias') || '[]');
+    function renderMedias() {
+        var html = '';
+        if(medias.length === 0) html = '<div style="color:#999;font-size:14px;text-align:center;">暂无素材</div>';
+        medias.forEach((item, index) => {
+            html += `<div class="list-item"><div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:70%;"><a href="${item.url}" target="_blank" style="color:#2b7a78;text-decoration:none;">${item.title}</a></div><button class="del-btn" onclick="delMedia(${index})">删除</button></div>`;
+        });
+        document.getElementById('mediaList').innerHTML = html;
+    }
+    function addMedia() {
+        var title = document.getElementById('mediaTitle').value.trim();
+        var url = document.getElementById('mediaUrl').value.trim();
+        if(title && url) { medias.push({title: title, url: url}); localStorage.setItem('ql_medias', JSON.stringify(medias)); document.getElementById('mediaTitle').value = ''; document.getElementById('mediaUrl').value = ''; renderMedias(); }
+    }
+    function delMedia(index) { medias.splice(index, 1); localStorage.setItem('ql_medias', JSON.stringify(medias)); renderMedias(); }
+    var posts = JSON.parse(localStorage.getItem('ql_posts') || '[]');
+    function renderPosts() {
+        var html = '';
+        if(posts.length === 0) html = '<div style="color:#999;font-size:14px;text-align:center;">暂无动态</div>';
+        posts.forEach((item, index) => {
+            html += `<div class="list-item" style="display:block;padding:15px 0;"><div style="font-size:14px;margin-bottom:5px;line-height:1.5;">${item.content}</div><div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:12px;color:#999;">${item.time}</span><button class="del-btn" style="padding:3px 8px;" onclick="delPost(${index})">删除</button></div></div>`;
+        });
+        document.getElementById('postList').innerHTML = html;
+    }
+    function addPost() {
+        var content = document.getElementById('postContent').value.trim();
+        if(content) { var time = new Date().toLocaleString(); posts.unshift({content: content, time: time}); localStorage.setItem('ql_posts', JSON.stringify(posts)); document.getElementById('postContent').value = ''; renderPosts(); }
+    }
+    function delPost(index) { posts.splice(index, 1); localStorage.setItem('ql_posts', JSON.stringify(posts)); renderPosts(); }
+    window.onload = function() { renderSignups(); renderMedias(); renderPosts(); };
+</script>
 </body>
-</html>
+        </html>
