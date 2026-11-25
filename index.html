@@ -528,13 +528,10 @@ const POEMS = [
 ];
 
 /* ---------- 默认帮规 ---------- */
-const DEFAULT_RULES = `一、清平乐者，以清为骨，以平为怀，以乐为归。
-二、11月28日起，帮中一应事务，交由当任群主与管理员共议定夺。
-三、团结友爱，互助和谐。不以辱骂、诈骗、挑拨为手段损害帮会与他人。
-四、接龙必实名，一人一接；投票、统计各抒己见，不作人身攻讦。
-五、朋友圈可晒山水与心事，亦可附图；不得盗图冒名，不得攻击他人。
-六、犯前三、四、五条者，管理员可删其动态与图片，重者逐出清平，终身不得复入。
-七、向阳而生，快乐成长。愿诸君在此，各得一段醉清欢。`;
+const DEFAULT_RULES = `1. 11月27日之前，听二当家的；11月28日起，清平乐一应事务，交由清平乐即任大当家定夺。
+2. 团结友爱，互助和谐。
+3. 任何成员不得以辱骂、诈骗等为手段损害帮会利益，违者即刻踢除，终身不得入清平。
+4. 向阳而生，快乐成长。`;
 
 /* ---------- 状态 ---------- */
 let state;
@@ -637,7 +634,7 @@ function baseState() {
     notices: [{
       id: 'n_1', authorId: null, authorName: '清平乐·司礼', pinned: true, published: true,
       time: now - 26 * 3600000, publishAt: null,
-      content: '【开帮公告】\n清平乐自今日起，一应事务由群主与管理员共议。\n接龙必实名、投票可匿名、统计每日一填。愿诸君在此，各得一段醉清欢。',
+      content: '【开帮公告】\n清平乐自今日起，一应事务由即任大当家定夺。\n接龙必实名、投票可匿名、统计每日一填。愿诸君在此，各得一段醉清欢。',
       imgs: []
     }],
     groups: [], groupMsgs: {}, dm: {}, reqs: [],
@@ -649,6 +646,23 @@ function boot() {
   state = loadState();
   if (!state) { state = baseState(); saveState(); }
   if (!state.users) state = baseState();
+
+  // 兼容旧数据：更新清平准则；移除本人置顶的「开帮」欢迎公告
+  const OLD_RULE_HEAD = '一、清平乐者，以清为骨';
+  if (!state.rules || String(state.rules).indexOf(OLD_RULE_HEAD) === 0) {
+    state.rules = DEFAULT_RULES;
+  }
+  state.notices.forEach(n => {
+    if (String(n.content || '').indexOf('由群主与管理员共议') > -1) {
+      n.content = n.content.replace('由群主与管理员共议', '由即任大当家定夺');
+    }
+  });
+  if (state.me) {
+    const before = state.notices.length;
+    state.notices = state.notices.filter(n =>
+      !(n.pinned && n.authorId === state.me && String(n.content || '').indexOf('【清平乐·开帮】') === 0));
+    if (state.notices.length !== before) saveState();
+  }
 }
 
 /* ---------- 当前用户 ---------- */
@@ -841,13 +855,6 @@ function register(name, avatar) {
     { id: uid('r'), from: 'u_hf', to: id, time: Date.now() - 1800000, status: 'pending' },
     { id: uid('r'), from: 'u_dm', to: id, time: Date.now() - 900000, status: 'pending' }
   );
-
-  // 欢迎公告
-  state.notices.unshift({
-    id: uid('n'), authorId: id, authorName: name, pinned: true, published: true,
-    time: Date.now(), publishAt: null, imgs: [],
-    content: `【清平乐·开帮】\n欢迎「${name}」入驻清平乐•醉清欢。\n此间有准则、有接龙、有投票与统计；有花繁若轩可晒山水，有蝶梦袅袅可读诗词。\n愿君在此，醉一段清欢。`
-  });
 
   // 昨日榜单补一笔自己的数据
   const y = ymd(dayShift(-1));
