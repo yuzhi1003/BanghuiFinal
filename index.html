@@ -365,12 +365,12 @@ audio{width:100%;margin-top:6px}
 <div id="authScreen" class="hidden">
   <div class="auth-logo">樂</div>
   <div class="auth-title">清平乐•醉清欢</div>
-  <div class="auth-sub">一知一梦 · 一世清欢</div>
+  <div class="auth-sub">一帮一会 · 一世清欢</div>
   <div class="auth-panel">
     <button class="btn btn-wechat" id="btnWechat">微信一键登录</button>
     <div class="auth-note" id="authNote">
-      本设备仅可注册一个账号，一经注册不可再开小号，桀桀桀。<br>
-      仅季云知成为本帮会「开发者」。
+      本设备仅可注册一个账号，一经注册不可再开小号。<br>
+      首次登录即自动注册并成为本帮会「开发者」。
     </div>
   </div>
 </div>
@@ -382,7 +382,7 @@ audio{width:100%;margin-top:6px}
     <div class="brand">
       <div class="brand-seal">樂</div>
       <div class="brand-title">清平乐•醉清欢
-        <small id="topSub">漫许流年 · 醉此清欢</small>
+        <small id="topSub">清平世界 · 醉此清欢</small>
       </div>
     </div>
     <div class="topbar-actions">
@@ -442,7 +442,7 @@ audio{width:100%;margin-top:6px}
   <div class="chat-body" id="chatBody"></div>
   <div class="chat-input">
     <button class="plus" id="chatImg">＋</button>
-    <input id="chatInput" placeholder="花一笺，与卿评……" autocomplete="off">
+    <input id="chatInput" placeholder="书一言，寄君听……" autocomplete="off">
     <button class="send" id="chatSend">寄</button>
   </div>
 </section>
@@ -452,7 +452,7 @@ audio{width:100%;margin-top:6px}
 
 <script>'use strict';
 /* =========================================================
-   清平乐•醉清欢  ·  帅知社区（纯前端本地数据版）
+   清平乐•醉清欢  ·  帮会社区（纯前端本地数据版）
    ========================================================= */
 
 const KEY = 'qlz_state_v2';
@@ -542,14 +542,23 @@ function loadState() {
 }
 function saveState() {
   try { localStorage.setItem(KEY, JSON.stringify(state)); }
-  catch (e) { toast('正常发，没事，咱这个内存有点小，本知正在尽量优化，若惹得大家不开心的话，咱们欺负全服去，乖'); }
+  catch (e) { toast('本地存储空间不足，请删除部分图片后再试'); }
 }
 
 function npcUsers() {
   return [
-    { id: 'u_jyz', name: '大雪', sig: '风漫漫，雪云澜。', seedKey: 'yx' },
-   
-    ].map((u, i) => ({
+    { id: 'u_jyz', name: '云舟', sig: '清风入怀，云舟自渡。', seedKey: 'jyz' },
+    { id: 'u_hf', name: '花繁若轩', sig: '花开繁处，自有清欢。', seedKey: 'hf' },
+    { id: 'u_dm', name: '蝶梦', sig: '一帘蝶梦，半卷清词。', seedKey: 'dm' },
+    { id: 'u_jin', name: '槿', sig: '槿花朝开暮落，惜取眼前。', seedKey: 'jin' },
+    { id: 'u_huan', name: '寰', sig: '寰宇为笺，落笔成诗。', seedKey: 'huan' },
+    { id: 'u_qing', name: '清和', sig: '清和天气，人间好时节。', seedKey: 'qing' },
+    { id: 'u_muyu', name: '沐雨', sig: '沐一场旧雨，等一个故人。', seedKey: 'muyu' },
+    { id: 'u_zhuyin', name: '竹隐', sig: '竹影深处，藏一段闲。', seedKey: 'zhuyin' },
+    { id: 'u_tingxue', name: '听雪', sig: '听雪落无声，亦听人心。', seedKey: 'tingxue' },
+    { id: 'u_nanzhi', name: '南枝', sig: '南枝向暖，北枝生寒。', seedKey: 'nanzhi' },
+    { id: 'u_yanhui', name: '雁回', sig: '雁字回时，月满西楼。', seedKey: 'yanhui' }
+  ].map((u, i) => ({
     ...u,
     avatar: svgAvatar(u.name),
     bg: null, music: null, splash: null, chatBg: null, chatMusic: null,
@@ -574,22 +583,22 @@ function baseState() {
   const posts = [
     {
       id: 'p_hf1', uid: 'u_hf', time: now - 23 * 3600000,
-      content: '今日有帅知的山色极好，云在肩头，知在袖里。\n发一张昨日画的大帅知，与诸君共赏清欢。',
+      content: '今日山色极好，云在肩头，风在袖里。\n发一张昨日画的小景，与诸君共赏清欢。',
       imgs: [svgArt('a')], likes: ['u_jyz', 'u_dm', 'u_jin', 'u_huan', 'u_qing', 'u_muyu']
     },
     {
       id: 'p_dm1', uid: 'u_dm', time: now - 9 * 3600000,
-      content: '新抄了一阕《如梦令》，墨还未干。\ndoyoulovemelove知love清照，来我主页坐坐。',
+      content: '新抄了一阕《如梦令》，墨还未干。\n若你也爱清照，来我主页坐坐。',
       imgs: [], likes: ['u_hf', 'u_jyz', 'u_tingxue', 'u_nanzhi']
     },
     {
       id: 'p_jin1', uid: 'u_jin', time: now - 3 * 3600000,
-      content: '帮里的接龙记得接呀，一人一接，不可匿名——这是咱欺负全服的默契。',
+      content: '帮里的接龙记得接呀，一人一接，不可匿名——这是咱清平的规矩。',
       imgs: [svgArt('b')], likes: ['u_hf', 'u_muyu']
     },
     {
       id: 'p_yan1', uid: 'u_yanhui', time: now - 40 * 60000,
-      content: '秋风起，雁南回。愿诸君夜间皆有星光，白日自有烟火。',
+      content: '秋风起，雁南回。愿各位夜里都有灯光，白天都有去处。',
       imgs: [], likes: ['u_jyz']
     }
   ];
@@ -598,21 +607,21 @@ function baseState() {
     version: 2, registered: false, me: null, users, posts,
     rules: DEFAULT_RULES,
     signups: [{
-      id: 's_1', title: '本周帮战接龙 · 清平乐欺负全服名单', creatorId: null, creatorName: '清平乐·司礼',
+      id: 's_1', title: '本周帮战接龙 · 清平乐出战名单', creatorId: null, creatorName: '清平乐·司礼',
       pinned: true, createdAt: now - 5 * 3600000, expiresAt: now + 19 * 3600000, closed: false,
       entries: [
-        { uid: 'u_jyz', name: '大雪', time: now - 4 * 3600000, note: '熹微' },
-        { uid: 'u_jin', name: '中雪', time: now - 3 * 3600000, note: '珞霞' },
-        { uid: 'u_huan', name:'小雪', time: now - 2 * 3600000, note: '寰珮' }
+        { uid: 'u_jyz', name: '云舟', time: now - 4 * 3600000, note: '先锋' },
+        { uid: 'u_jin', name: '槿', time: now - 3 * 3600000, note: '后排' },
+        { uid: 'u_huan', name: '寰', time: now - 2 * 3600000, note: '策应' }
       ]
     }],
     polls: [{
       id: 'v_1', title: '下月帮会活动，你想去哪儿？', creatorId: null, creatorName: '清平乐·司礼',
       pinned: true, anonymous: false, createdAt: now - 6 * 3600000, expiresAt: now + 18 * 3600000,
       closed: false, options: [
-        { text: '黄昏欺负全服', votes: ['u_jyz', 'u_hf', 'u_dx'] },
-        { text: '落日全服欺负', votes: ['u_jin', 'u_zx'] },
-        { text: '线上诗词雅集', votes: ['u_qing', 'u_xx', 'u_muyu'] }
+        { text: '夜游江南水乡', votes: ['u_jyz', 'u_hf', 'u_dm'] },
+        { text: '山中露营赏星', votes: ['u_jin', 'u_huan'] },
+        { text: '线上诗词雅集', votes: ['u_qing', 'u_tingxue', 'u_muyu'] }
       ]
     }],
     stats: [{
@@ -625,7 +634,7 @@ function baseState() {
     notices: [{
       id: 'n_1', authorId: null, authorName: '清平乐·司礼', pinned: true, published: true,
       time: now - 26 * 3600000, publishAt: null,
-      content: '【开帮公告】\n清平乐自11月28日起，一应事务由即任大当家定夺。\n接龙必实名、投票可匿名、统计每日一填。愿诸君在此，各得一段醉清欢。',
+      content: '【开帮公告】\n清平乐自今日起，一应事务由即任大当家定夺。\n接龙必实名、投票可匿名、统计每日一填。愿诸君在此，各得一段醉清欢。',
       imgs: []
     }],
     groups: [], groupMsgs: {}, dm: {}, reqs: [],
@@ -639,7 +648,7 @@ function boot() {
   if (!state.users) state = baseState();
 
   // 兼容旧数据：更新清平准则；移除本人置顶的「开帮」欢迎公告
-  const OLD_RULE_HEAD = '一、芝兰同室，君子同芳';
+  const OLD_RULE_HEAD = '一、清平乐者，以清为骨';
   if (!state.rules || String(state.rules).indexOf(OLD_RULE_HEAD) === 0) {
     state.rules = DEFAULT_RULES;
   }
@@ -732,8 +741,8 @@ function pickImage(cb, maxW = 1200) {
   p.value = '';
   p.onchange = async () => {
     const f = p.files[0]; if (!f) return;
-    try { toast('图片知处理中…'); cb(await compress(f, maxW, 0.84)); }
-    catch (e) { toast('图片知读取失败'); }
+    try { toast('图片处理中…'); cb(await compress(f, maxW, 0.84)); }
+    catch (e) { toast('图片读取失败'); }
   };
   p.click();
 }
@@ -770,7 +779,7 @@ function showAuth() {
   const reg = state.registered;
   $('#authNote').innerHTML = reg
     ? `本设备已注册账号「${esc((me() || state.users.find(u => u.id === state.regUid) || {}).name || '')}」。<br>请用微信登录继续，本帮会不发小号。`
-    : `本设备仅可注册一个账号，一经注册不可再开小号。<br>季云知，成为本帮会「开发者」。`;
+    : `本设备仅可注册一个账号，一经注册不可再开小号。<br>首次登录即自动注册，并成为本帮会「开发者」。`;
   $('#btnWechat').textContent = reg ? '微信登录' : '微信一键注册登录';
   auth.classList.remove('hidden');
 }
@@ -821,7 +830,7 @@ function wechatFlow() {
 function register(name, avatar) {
   const id = 'u_me_' + Date.now().toString(36);
   const u = {
-    id, name, sig: '春风不止，清平不散。', avatar: avatar || svgAvatar(name),
+    id, name, sig: '初来清平，愿得清欢。', avatar: avatar || svgAvatar(name),
     bg: null, music: null, splash: null, chatBg: null, chatMusic: null,
     role: 'developer', friends: [], createdAt: Date.now(), visitsTotal: 0,
     wxId: 'wx_' + id, wxName: name
@@ -832,13 +841,13 @@ function register(name, avatar) {
   // 默认进入大群聊
   const all = state.users.map(x => x.id);
   state.groups.unshift({
-    id: 'g_main', name: '清平乐·醉清欢', isMain: true, members: all,
+    id: 'g_main', name: '清平乐·大群聊', isMain: true, members: all,
     ownerId: id, createdAt: Date.now()
   });
   state.groupMsgs['g_main'] = [
-    { id: uid('m'), type: 'sys', text: `「${name}」加入了清平乐醉清欢`, time: Date.now() - 60000 },
-    { id: uid('m'), from: 'u_jyz', text: '今夕可否为春？', time: Date.now() - 50000 },
-    { id: uid('m'), from: 'u_hf', text: '今雨可为故雨？', time: Date.now() - 40000 }
+    { id: uid('m'), type: 'sys', text: `「${name}」加入了清平乐大群聊`, time: Date.now() - 60000 },
+    { id: uid('m'), from: 'u_jyz', text: '欢迎新朋友。既入清平，便是一家人。', time: Date.now() - 50000 },
+    { id: uid('m'), from: 'u_hf', text: '来了就好，先去看看今日诗词罢。', time: Date.now() - 40000 }
   ];
 
   // 好友申请演示
