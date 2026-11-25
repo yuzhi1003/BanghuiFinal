@@ -1,615 +1,2041 @@
 <!DOCTYPE html>
-<html>
-<head>// 当前登录人
-let me = JSON.parse(localStorage.getItem("user"));let me = JSON.parse(localStorage.getItem("user") || "null");
-let chatTargetUid = null;
-let pollTimer = null;
-
-const chatBox = document.getElementById("chatBox");
-const inp = document.getElementById("inp");
-const sendBtn = document.getElementById("sendBtn");
-
-sendBtn.onclick = async () => {
-  const text = inp.value.trim();
-  if (!text || !chatTargetUid || !me) return;
-  // 这里后面替换成真实接口
-  console.log("发送：", text);
-  inp.value = "";
-};
-
-// 开启轮询
-function startPoll() {
-  if (pollTimer) clearInterval(pollTimer);
-  pollTimer = setInterval(() => {
-    if (!chatTargetUid || !me) return;
-    // 拉取消息，等后端接口写好再补上
-  }, 1500);
-}
-
-// 切换聊天对象（点头像就调用这个）
-function openChat(toUid) {
-  chatTargetUid = toUid;
-  startPoll();
-}
-
-// 渲染消息
-function render(list) {
-  chatBox.innerHTML = "";
-  list.forEach(row => {
-    const div = document.createElement("div");
-    if (row.from_uid === me.id) div.className = "msg-me";
-    else div.className = "msg-other";
-    const span = document.createElement("span");
-    span.className = "bubble";
-    span.innerText = row.content;
-    div.appendChild(span);
-    chatBox.appendChild(div);
-  });
-  chatBox.scrollTop = chatBox.scrollHeight;
-}
-
-// 当前正在聊天对象
-let chatTargetUid = null;
-let chatTimer = null;
-
-// 开启轮询
-function startPollChat() {
-  stopPollChat();
-  chatTimer = setInterval(async () => {
-    if (!chatTargetUid || !me) return;
-    await loadChatRecord();
-  }, 1500);
-}
-
-// 停止轮询
-function stopPollChat() {
-  if (chatTimer) clearInterval(chatTimer);
-}
-
-// 获取对话记录
-async function loadChatRecord() {
-  const res = await fetch(`/api/getChat?uid1=${me.id}&uid2=${chatTargetUid}`);
-  const data = await res.json();
-  renderChat(data);
-}
-
-// 发送消息
-async function sendChat(text) {
-  if (!chatTargetUid || !text.trim()) return;
-  await fetch("/api/sendMessage", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      from_uid: me.id,
-      to_uid: chatTargetUid,
-      content: text
-    })
-  });
-  await loadChatRecord();
-}
-
-// 切换聊天对象（点别人头像就调用这个）
-function openChat(targetUid) {
-  chatTargetUid = targetUid;
-  startPollChat();
-  loadChatRecord();
-}
-
-// 渲染消息到页面（你后面按古风样式自己美化）
-function renderChat(list) {
-  // 清空聊天框，循环输出消息
-}
-┌─────────────────────┐
-│ 帮会成员列表（头像） │ ← 点任意头像 → openChat(对方uid)
-├─────────────────────┤
-│   聊天记录区域       │
-│ （消息上下滚动）     │
-├─────────────────────┤
-│ [输入框]  [发送按钮] │
-└─────────────────────┘
-<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>清平乐 · 私语</title>
-  <style>
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body {
-      background:#f7efe3;
-      font-family:"楷体", serif;
-      color:#444;
-      padding:16px;
-    }
-    .wrap {
-      max-width:600px;
-      margin:0 auto;
-      border:1px solid #c8b498;
-      border-radius:12px;
-      overflow:hidden;
-    }
-    .head {
-      background:#d9c4a7;
-      padding:14px;
-      text-align:center;
-      font-size:22px;
-    }
-    .box {
-      height:420px;
-      overflow-y:auto;
-      padding:16px;
-    }
-    .msg-me {
-      text-align:right;
-      margin-bottom:14px;
-    }
-    .msg-other {
-      text-align:left;
-      margin-bottom:14px;
-    }
-    .bubble {
-      display:inline-block;
-      padding:10px 14px;
-      border-radius:10px;
-      max-width:70%;
-    }
-    .msg-me .bubble { background:#e9d7bb; }
-    .msg-other .bubble { background:#fff; }
-    .send-area {
-      display:flex;
-      gap:8px;
-      padding:14px;
-      border-top:1px solid #c8b498;
-    }
-    #inp {
-      flex-grow:1;
-      padding:10px;
-      border:1px solid #c8b498;
-      border-radius:8px;
-      font-size:16px;
-    }
-    #sendBtn {
-      padding:10px 20px;
-      background:#b9946b;
-      color:white;
-      border:none;
-      border-radius:8px;
-      cursor:pointer;
-      font-size:16px;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#2f5d50">
+<title>清平乐•醉清欢</title>
+<style>:root{
+  --paper:#f7f2e7;
+  --paper-2:#eee3d1;
+  --card:#fffdf7;
+  --ink:#313b36;
+  --ink-2:#5c6660;
+  --sub:#8d9088;
+  --line:rgba(120,100,70,.18);
+  --jade:#2f5d50;
+  --jade-deep:#22453b;
+  --cinnabar:#a8473c;
+  --gold:#b08d57;
+  --shadow:0 6px 18px rgba(74,58,38,.08);
+  --serif:"Songti SC","STSong","Noto Serif SC","Source Han Serif SC","Kaiti SC","KaiTi",serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:var(--serif);
+  color:var(--ink);
+  background:
+    radial-gradient(1200px 600px at 50% -10%, #fffdf6 0%, rgba(255,253,246,0) 60%),
+    linear-gradient(180deg,#f3ecdd,#efe7d6 55%,#efe5d2);
+  min-height:100vh;
+  overscroll-behavior-y:none;
+}
+img{-webkit-user-drag:none}
+button{font-family:var(--serif);cursor:pointer}
+input,textarea{font-family:var(--serif)}
+.hidden{display:none!important}
+
+/* 手机壳 */
+#app,#authScreen,#splash{max-width:480px;margin:0 auto;position:relative}
+.app-bg{position:fixed;inset:0;pointer-events:none;background:
+  radial-gradient(circle at 12% 8%, rgba(176,141,87,.10), transparent 40%),
+  radial-gradient(circle at 88% 92%, rgba(47,93,80,.10), transparent 45%);}
+
+/* ============ 启动画面 ============ */
+#splash{
+  position:fixed;inset:0;z-index:1200;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:14px;
+  background:linear-gradient(160deg,#28473d,#1c3129 60%,#2a3a30);
+  color:#f3ead6;transition:opacity .6s ease, visibility .6s;
+  background-size:cover;background-position:center;
+}
+#splash.fade{opacity:0;visibility:hidden}
+.splash-seal{
+  width:74px;height:74px;border:2px solid rgba(243,234,214,.55);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;font-size:26px;letter-spacing:2px;
+  background:rgba(0,0,0,.12);backdrop-filter:blur(2px);
+}
+.splash-title{font-size:28px;letter-spacing:8px;text-indent:8px;text-shadow:0 2px 12px rgba(0,0,0,.35)}
+.splash-sub{font-size:13px;letter-spacing:4px;opacity:.75}
+.splash-line{width:60px;height:1px;background:rgba(243,234,214,.35);margin:4px 0}
+
+/* ============ 登录 ============ */
+#authScreen{min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:32px 26px 90px;position:relative;z-index:20}
+.auth-logo{width:84px;height:84px;margin:0 auto 18px;border:1px solid var(--line);border-radius:12px;
+  background:linear-gradient(150deg,#fffdf6,#ece1cd);display:flex;align-items:center;justify-content:center;
+  font-size:30px;color:var(--jade);box-shadow:var(--shadow)}
+.auth-title{text-align:center;font-size:26px;letter-spacing:6px;text-indent:6px}
+.auth-sub{text-align:center;color:var(--sub);font-size:12.5px;letter-spacing:2px;margin:10px 0 34px}
+.auth-panel{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:var(--shadow)}
+.btn{border:none;border-radius:10px;padding:12px 16px;font-size:15px;width:100%;letter-spacing:2px;transition:.18s}
+.btn-primary{background:linear-gradient(180deg,#35695b,#2a5347);color:#f6efdf;box-shadow:0 6px 14px rgba(47,93,80,.22)}
+.btn-primary:active{transform:translateY(1px);opacity:.92}
+.btn-ghost{background:#fff;color:var(--ink);border:1px solid var(--line)}
+.btn-wechat{background:#07c160;color:#fff;box-shadow:0 6px 14px rgba(7,193,96,.22)}
+.btn-gold{background:linear-gradient(180deg,#c2a175,#a8875c);color:#fffaf0}
+.btn-danger{background:#fff;color:var(--cinnabar);border:1px solid rgba(168,71,60,.35)}
+.btn-mini{width:auto;padding:6px 12px;font-size:12px;border-radius:8px;letter-spacing:0}
+.auth-note{margin-top:16px;font-size:11.5px;color:var(--sub);line-height:1.9;text-align:center}
+
+/* 微信授权弹窗 */
+.wechat-card{background:#fff;border-radius:16px;overflow:hidden;width:100%;max-width:340px}
+.wx-head{background:#f7f7f7;padding:14px;text-align:center;font-size:13px;color:#666;border-bottom:1px solid #eee}
+.wx-body{padding:18px}
+.wx-app{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.wx-app-icon{width:40px;height:40px;border-radius:8px;background:#07c160;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px}
+.wx-app-name{font-size:15px}
+.wx-app-desc{font-size:12px;color:#999}
+.wx-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid #f0f0f0}
+.wx-row .lbl{font-size:13px;color:#666;width:56px}
+.wx-row .val{font-size:13px;color:#333;flex:1}
+
+/* ============ 主界面 ============ */
+.topbar{
+  position:sticky;top:0;z-index:40;
+  padding:12px 16px 10px;
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  background:linear-gradient(180deg,rgba(250,246,237,.98),rgba(247,242,231,.92));
+  border-bottom:1px solid var(--line);backdrop-filter:blur(10px);
+}
+.topbar .brand{display:flex;align-items:center;gap:9px;min-width:0}
+.brand-seal{width:30px;height:30px;border:1px solid rgba(47,93,80,.45);border-radius:6px;color:var(--jade);
+  display:flex;align-items:center;justify-content:center;font-size:14px;background:rgba(255,255,255,.6);flex:none}
+.brand-title{font-size:17px;letter-spacing:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand-title small{display:block;font-size:10px;letter-spacing:2px;color:var(--sub);margin-top:2px}
+.topbar-actions{display:flex;gap:8px;flex:none}
+.icon-btn{width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:rgba(255,255,255,.7);
+  display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--jade)}
+.icon-btn .dot{position:absolute;transform:translate(12px,-12px);width:8px;height:8px;border-radius:50%;background:var(--cinnabar)}
+
+main{padding:14px 14px 84px}
+.page{display:none}
+.page.active{display:block;animation:fade .25s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:var(--shadow)}
+.card-title{display:flex;align-items:center;gap:8px;font-size:14.5px;color:var(--jade);margin-bottom:10px;letter-spacing:1px}
+.card-title .bar{width:3px;height:14px;background:var(--jade);border-radius:2px}
+.card-title .tag{margin-left:auto;font-size:10.5px;color:var(--sub);letter-spacing:0}
+.hint{font-size:11.5px;color:var(--sub);line-height:1.7}
+.hint-warn{color:var(--cinnabar)}
+
+.ta{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;line-height:1.7;
+  background:#fffefb;outline:none;resize:none;color:var(--ink)}
+.ta:focus{border-color:rgba(47,93,80,.5);box-shadow:0 0 0 3px rgba(47,93,80,.08)}
+.inp{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;background:#fffefb;outline:none;color:var(--ink)}
+.inp:focus{border-color:rgba(47,93,80,.5);box-shadow:0 0 0 3px rgba(47,93,80,.08)}
+.row{display:flex;gap:8px;align-items:center}
+.row .grow{flex:1;min-width:0}
+.mt8{margin-top:8px}.mt12{margin-top:12px}.mb8{margin-bottom:8px}
+
+/* 子标签 */
+.subtabs{display:flex;gap:6px;padding:4px;background:rgba(255,255,255,.6);border:1px solid var(--line);border-radius:12px;margin-bottom:12px;overflow-x:auto}
+.subtab{flex:1;min-width:66px;text-align:center;padding:9px 4px;font-size:13px;color:var(--ink-2);border-radius:9px;white-space:nowrap}
+.subtab.active{background:linear-gradient(180deg,#35695b,#2a5347);color:#f6efdf;box-shadow:0 3px 8px rgba(47,93,80,.2)}
+
+/* 接龙 / 投票 / 统计 列表 */
+.item{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px;margin-bottom:11px;box-shadow:var(--shadow)}
+.item-head{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.item-head b{font-size:14.5px;color:var(--ink);font-weight:600}
+.badge{font-size:10px;padding:2px 7px;border-radius:999px;letter-spacing:0;white-space:nowrap}
+.badge-pin{background:rgba(168,71,60,.1);color:var(--cinnabar);border:1px solid rgba(168,71,60,.25)}
+.badge-role{background:rgba(47,93,80,.1);color:var(--jade);border:1px solid rgba(47,93,80,.22)}
+.badge-ok{background:rgba(47,93,80,.08);color:var(--jade)}
+.badge-wait{background:rgba(176,141,87,.14);color:#8a6a35}
+.badge-time{margin-left:auto;font-size:10.5px;color:var(--sub);letter-spacing:0}
+.meta{font-size:11px;color:var(--sub);line-height:1.7}
+
+.progress{height:5px;border-radius:4px;background:rgba(120,100,70,.14);overflow:hidden;margin:6px 0}
+.progress > i{display:block;height:100%;background:linear-gradient(90deg,#4a7d6c,#b08d57);width:0;transition:width .3s}
+
+.participants{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.person{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;background:rgba(47,93,80,.06);
+  border:1px solid rgba(47,93,80,.12);border-radius:999px;padding:3px 8px 3px 3px;color:var(--ink-2)}
+.person img{width:18px;height:18px;border-radius:50%}
+
+.options{display:flex;flex-direction:column;gap:7px;margin-top:8px}
+.opt{display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--line);border-radius:10px;font-size:13px;background:#fffefb}
+.opt:active{background:#f6f0e3}
+.opt .opt-name{flex:1;min-width:0}
+.opt .opt-cnt{font-size:11.5px;color:var(--sub)}
+.opt.voted{border-color:rgba(47,93,80,.45);background:rgba(47,93,80,.06)}
+.opt .radio{width:14px;height:14px;border-radius:50%;border:1px solid rgba(47,93,80,.5);flex:none}
+.opt.voted .radio{background:var(--jade);border-color:var(--jade)}
+
+/* 朋友圈 */
+.moment{background:var(--card);border:1px solid var(--line);border-radius:14px;margin-bottom:12px;box-shadow:var(--shadow);overflow:hidden}
+.moment-top{display:flex;gap:10px;padding:13px 13px 8px;align-items:center}
+.moment-top img{width:40px;height:40px;border-radius:9px;object-fit:cover}
+.avatar{width:40px;height:40px;border-radius:9px;object-fit:cover}
+.m-name{font-size:13.5px;color:var(--jade)}
+.m-time{font-size:10.5px;color:var(--sub);margin-top:2px}
+.m-del{margin-left:auto;font-size:13px;color:var(--sub);padding:2px 6px}
+.m-text{padding:0 14px 10px;font-size:14px;line-height:1.75;white-space:pre-wrap;word-break:break-word}
+.m-imgs{display:grid;gap:4px;padding:0 0 0;grid-template-columns:repeat(3,1fr)}
+.m-imgs.one{grid-template-columns:1fr}
+.m-imgs.two{grid-template-columns:repeat(2,1fr)}
+.m-imgs img{width:100%;aspect-ratio:1/1;object-fit:cover;display:block}
+.m-imgs.one img{aspect-ratio:4/3}
+.m-actions{display:flex;gap:18px;padding:10px 14px;border-top:1px solid rgba(120,100,70,.08)}
+.m-act{font-size:12px;color:var(--ink-2);display:inline-flex;gap:5px;align-items:center;background:none;border:none;padding:2px 0}
+.m-act.liked{color:var(--cinnabar)}
+.img-pick{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.img-pick .thumb{position:relative;width:64px;height:64px;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+.img-pick .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.img-pick .thumb span{position:absolute;top:0;right:0;width:18px;height:18px;background:rgba(0,0,0,.55);color:#fff;
+  font-size:12px;display:flex;align-items:center;justify-content:center;border-radius:0 0 0 6px}
+
+/* 每日清平 */
+.notice{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px;margin-bottom:11px;box-shadow:var(--shadow)}
+.notice.pinned{border-color:rgba(168,71,60,.28)}
+.n-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.n-title{font-size:13.5px;color:var(--jade)}
+.n-body{font-size:14px;line-height:1.8;white-space:pre-wrap;word-break:break-word}
+.n-body img{width:100%;border-radius:10px;margin-top:8px;display:block}
+.boards{display:flex;flex-direction:column;gap:8px}
+.board-row{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:10px;background:rgba(176,141,87,.07);border:1px solid rgba(176,141,87,.18)}
+.board-rank{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;
+  background:linear-gradient(180deg,#c9ab7c,#a8875c);color:#fff;flex:none}
+.board-row.r2 .board-rank{background:linear-gradient(180deg,#c8c8c8,#a9a9a9)}
+.board-row.r3 .board-rank{background:linear-gradient(180deg,#cba98c,#ab8264)}
+.board-row img{width:26px;height:26px;border-radius:50%}
+.board-name{font-size:13px;flex:1;min-width:0}
+.board-val{font-size:11px;color:var(--sub)}
+.summary{margin-top:10px;padding:10px 12px;border-radius:10px;background:rgba(47,93,80,.05);border:1px dashed rgba(47,93,80,.25);
+  font-size:12.5px;line-height:2;color:var(--ink-2)}
+
+/* 诗词 */
+.poem-wrap{position:relative;background:linear-gradient(160deg,#fffdf6,#f3ead6);border:1px solid var(--line);border-radius:16px;
+  padding:22px 20px;box-shadow:var(--shadow);overflow:hidden}
+.poem-wrap::after{content:"詩";position:absolute;right:-6px;bottom:-24px;font-size:96px;color:rgba(176,141,87,.10);pointer-events:none}
+.poem-tag{display:inline-block;font-size:10.5px;letter-spacing:2px;color:var(--jade);border:1px solid rgba(47,93,80,.25);
+  border-radius:999px;padding:3px 10px;margin-bottom:14px;background:rgba(255,255,255,.6)}
+.poem-title{font-size:21px;letter-spacing:3px;text-align:center;color:var(--ink)}
+.poem-author{text-align:center;font-size:11.5px;color:var(--sub);margin:6px 0 16px;letter-spacing:1px}
+.poem-body{font-size:16px;line-height:2.2;text-align:center;letter-spacing:2px;white-space:pre-line;color:#3a453f}
+.poem-appr{margin-top:18px;padding-top:14px;border-top:1px solid rgba(120,100,70,.15);font-size:12.5px;line-height:2;color:var(--ink-2)}
+.poem-appr b{color:var(--jade);font-weight:600;letter-spacing:1px}
+.poem-his{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(120,100,70,.1);font-size:12.5px}
+.poem-his .d{color:var(--sub);font-size:11px;width:52px;flex:none}
+.poem-his .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* 好友 */
+.friend-row{display:flex;align-items:center;gap:10px;padding:11px 2px;border-bottom:1px solid rgba(120,100,70,.1)}
+.friend-row:last-child{border-bottom:none}
+.friend-row img{width:42px;height:42px;border-radius:10px;object-fit:cover}
+.friend-row .f-main{flex:1;min-width:0}
+.friend-row .f-name{font-size:14px;display:flex;align-items:center;gap:6px}
+.friend-row .f-sub{font-size:11px;color:var(--sub);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chev{color:var(--sub);font-size:12px}
+.section-label{font-size:11.5px;color:var(--sub);letter-spacing:2px;margin:4px 0 8px;display:flex;align-items:center;gap:8px}
+.section-label::after{content:"";flex:1;height:1px;background:var(--line)}
+.req{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px;margin-bottom:9px;display:flex;align-items:center;gap:10px}
+.req img{width:36px;height:36px;border-radius:9px}
+.req .r-main{flex:1;min-width:0}
+.req .r-name{font-size:13px}
+.req .r-sub{font-size:11px;color:var(--sub);margin-top:2px}
+
+/* 底部导航 */
+.tabbar{position:fixed;bottom:0;left:0;right:0;margin:0 auto;max-width:480px;height:64px;display:flex;z-index:50;
+  background:linear-gradient(180deg,rgba(253,250,243,.96),rgba(247,241,230,.99));border-top:1px solid var(--line);
+  box-shadow:0 -4px 18px rgba(74,58,38,.08);backdrop-filter:blur(12px);padding-bottom:env(safe-area-inset-bottom)}
+.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--sub);font-size:10.5px;letter-spacing:1px;position:relative}
+.tab-item .seal{width:24px;height:24px;border-radius:6px;border:1px solid rgba(120,100,70,.25);display:flex;align-items:center;justify-content:center;
+  font-size:12px;color:var(--ink-2);background:rgba(255,255,255,.5);transition:.2s}
+.tab-item.active{color:var(--jade);font-weight:600}
+.tab-item.active .seal{background:linear-gradient(180deg,#35695b,#2a5347);color:#f6efdf;border-color:transparent;box-shadow:0 4px 10px rgba(47,93,80,.25)}
+.tab-item .nav-dot{position:absolute;top:8px;right:calc(50% - 20px);width:7px;height:7px;border-radius:50%;background:var(--cinnabar)}
+
+/* 侧边抽屉 */
+#drawerMask{position:fixed;inset:0;background:rgba(30,36,32,.45);z-index:200;opacity:0;visibility:hidden;transition:.3s;backdrop-filter:blur(2px)}
+#drawerMask.open{opacity:1;visibility:visible}
+#drawer{visibility:hidden;position:fixed;top:0;left:max(0px, calc(50vw - 240px));bottom:0;width:83%;max-width:360px;z-index:210;background:linear-gradient(180deg,#fffdf7,#f6efe2);
+  transform:translateX(-104%);transition:transform .32s cubic-bezier(.2,.8,.2,1);overflow-y:auto;box-shadow:6px 0 24px rgba(40,30,10,.18)}
+#drawer.open{transform:translateX(0);visibility:visible}
+.drawer-head{padding:26px 18px 16px;background:linear-gradient(160deg,#2f5d50,#243f35);color:#f3ead6;position:relative}
+.drawer-head .dh-title{font-size:12px;letter-spacing:4px;opacity:.8}
+.drawer-head .dh-me{display:flex;align-items:center;gap:11px;margin-top:16px}
+.drawer-head img{width:56px;height:56px;border-radius:12px;border:1px solid rgba(243,234,214,.4);object-fit:cover}
+.drawer-head .dh-name{font-size:16px;letter-spacing:1px}
+.drawer-head .dh-sig{font-size:11px;opacity:.75;margin-top:4px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.drawer-body{padding:16px 16px 30px}
+.set-group{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:13px;margin-bottom:12px}
+.set-group h4{font-size:12.5px;color:var(--jade);letter-spacing:2px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.set-line{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(120,100,70,.08);font-size:13px}
+.set-line:last-of-type{border-bottom:none}
+.set-line .lbl{flex:none;width:76px;color:var(--ink-2);font-size:12.5px}
+.set-line .val{flex:1;min-width:0;font-size:12px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.set-line .act{flex:none;font-size:11.5px;color:var(--jade);border:1px solid rgba(47,93,80,.25);padding:4px 9px;border-radius:7px;background:#fff}
+.set-line .act.red{color:var(--cinnabar);border-color:rgba(168,71,60,.3)}
+
+/* 弹层 */
+#modalMask{position:fixed;inset:0;background:rgba(30,36,32,.5);z-index:300;display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(2px)}
+#modalMask.show{display:flex}
+.modal{width:100%;max-width:400px;background:var(--card);border-radius:16px;padding:18px;box-shadow:0 18px 40px rgba(30,25,15,.25);
+  max-height:86vh;overflow-y:auto;animation:pop .22s ease}
+@keyframes pop{from{transform:scale(.96);opacity:0}to{transform:none;opacity:1}}
+.modal h3{font-size:16px;color:var(--jade);letter-spacing:2px;text-align:center;margin-bottom:14px}
+.modal p{font-size:12.5px;color:var(--sub);line-height:1.9}
+
+/* 操作面板 */
+#sheetMask{position:fixed;inset:0;background:rgba(30,36,32,.45);z-index:280;display:none;align-items:flex-end;justify-content:center}
+#sheetMask.show{display:flex}
+.sheet{width:100%;max-width:480px;background:#f8f2e6;border-radius:18px 18px 0 0;padding:8px 12px 18px;animation:up .25s ease}
+@keyframes up{from{transform:translateY(30px);opacity:.5}to{transform:none;opacity:1}}
+.sheet-head{display:flex;align-items:center;gap:10px;padding:14px 12px 12px;border-bottom:1px solid var(--line)}
+.sheet-head img{width:40px;height:40px;border-radius:10px}
+.sheet-head b{font-size:14px}
+.sheet-head small{display:block;font-size:11px;color:var(--sub);margin-top:2px}
+.sheet-item{padding:14px 12px;font-size:15px;color:var(--ink);border-bottom:1px solid rgba(120,100,70,.1);text-align:center}
+.sheet-item:active{background:#f1e9da}
+.sheet-item.danger{color:var(--cinnabar)}
+.sheet-cancel{margin-top:8px;border-radius:10px;background:#fff;color:var(--sub);text-align:center;padding:13px;font-size:14px}
+
+/* 聊天 */
+#chatView{position:fixed;inset:0;max-width:480px;margin:0 auto;z-index:150;display:none;flex-direction:column;background:#f4ede0}
+#chatView.show{display:flex}
+.chat-head{display:flex;align-items:center;gap:10px;padding:11px 12px;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(250,246,237,.98),rgba(247,242,231,.94));backdrop-filter:blur(8px);z-index:5}
+.chat-head .back{border:none;background:none;font-size:22px;color:var(--jade);padding:0 4px;line-height:1}
+.chat-head .ch-main{flex:1;min-width:0;text-align:center}
+.chat-head .ch-name{font-size:14.5px;letter-spacing:1px}
+.chat-head .ch-sub{font-size:10px;color:var(--sub)}
+.chat-head .more{border:none;background:none;font-size:16px;color:var(--jade);padding:0 4px}
+.chat-body{flex:1;overflow-y:auto;padding:14px 12px 8px;display:flex;flex-direction:column;gap:10px;background-size:cover;background-position:center}
+.msg{display:flex;gap:8px;align-items:flex-start;max-width:82%}
+.msg img{width:30px;height:30px;border-radius:8px;flex:none}
+.msg .bubble{background:rgba(255,255,255,.94);padding:9px 12px;border-radius:4px 12px 12px 12px;font-size:14px;line-height:1.65;
+  word-break:break-word;box-shadow:0 2px 8px rgba(74,58,38,.08);border:1px solid rgba(255,255,255,.6)}
+.msg .btime{font-size:10px;color:var(--sub);margin-top:4px;text-align:left}
+.msg.me{margin-left:auto;flex-direction:row-reverse}
+.msg.me .bubble{background:linear-gradient(180deg,#3d7466,#2f5d50);color:#f2ecdd;border-radius:12px 4px 12px 12px}
+.msg.me .btime{text-align:right}
+.msg.sys{max-width:100%;margin:0 auto;justify-content:center;text-align:center}
+.msg.sys .bubble{background:rgba(255,255,255,.7);color:var(--sub);font-size:11px;border-radius:999px;padding:4px 12px;box-shadow:none}
+.msg .who{font-size:10.5px;color:rgba(0,0,0,.45);margin-bottom:3px;margin-left:2px}
+.chat-input{display:flex;gap:8px;padding:10px 10px calc(10px + env(safe-area-inset-bottom));background:rgba(253,250,243,.97);border-top:1px solid var(--line);align-items:center}
+.chat-input .plus{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--jade);font-size:18px;flex:none}
+.chat-input input{flex:1;min-width:0;border:1px solid var(--line);border-radius:18px;padding:10px 14px;font-size:14px;background:#fffefb;outline:none}
+.chat-input .send{width:56px;flex:none;border-radius:18px;border:none;background:linear-gradient(180deg,#35695b,#2a5347);color:#f6efdf;padding:10px 0;font-size:14px;letter-spacing:1px}
+
+/* 个人主页 */
+.profile-cover{height:150px;border-radius:14px 14px 0 0;background-size:cover;background-position:center;position:relative;overflow:hidden}
+.profile-cover::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.05),rgba(0,0,0,.25))}
+.profile-main{margin-top:-34px;padding:0 16px 18px;position:relative;z-index:2}
+.profile-main img.p-avatar{width:72px;height:72px;border-radius:14px;border:2px solid #fffdf7;object-fit:cover;box-shadow:0 6px 16px rgba(0,0,0,.18)}
+.p-name{font-size:17px;margin-top:9px;display:flex;align-items:center;gap:8px}
+.p-sig{font-size:12px;color:var(--sub);margin-top:5px;line-height:1.7}
+.p-stat{display:flex;gap:18px;margin-top:12px;font-size:11.5px;color:var(--sub)}
+.p-stat b{color:var(--ink);font-size:13px;margin-right:3px}
+.p-actions{display:flex;gap:8px;margin-top:14px}
+
+.empty{text-align:center;color:var(--sub);font-size:12.5px;padding:28px 10px;line-height:2}
+.toast{position:fixed;left:50%;bottom:96px;transform:translateX(-50%) translateY(10px);background:rgba(42,54,48,.94);color:#f6efdf;
+  font-size:13px;padding:10px 18px;border-radius:10px;z-index:500;opacity:0;transition:.25s;max-width:80%;width:max-content;text-align:center;line-height:1.6;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.role-dot{width:5px;height:5px;border-radius:50%;background:var(--gold);display:inline-block}
+.fab{position:fixed;right:calc(50% - 240px + 14px);bottom:80px;z-index:60;width:52px;height:52px;border-radius:50%;border:none;
+  background:linear-gradient(180deg,#35695b,#2a5347);color:#f6efdf;font-size:24px;box-shadow:0 8px 20px rgba(47,93,80,.3);display:flex;align-items:center;justify-content:center}
+@media(max-width:520px){.fab{right:14px}}
+.admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.adm{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:10px;display:flex;gap:8px;align-items:center}
+.adm img{width:32px;height:32px;border-radius:8px}
+.adm .a-name{font-size:12.5px}
+.adm .a-role{font-size:10px;color:var(--sub);margin-top:2px}
+.pill-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.pill{font-size:11px;padding:4px 9px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--ink-2)}
+audio{width:100%;margin-top:6px}
+
+.pm-badge{position:absolute;right:12px;top:12px;z-index:2;font-size:11.5px;letter-spacing:1px;color:#fdf6e6;background:rgba(47,93,80,.72);padding:4px 10px;border-radius:999px;backdrop-filter:blur(4px)}
+</style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="head">清平乐 · 私语</div>
-    <div class="box" id="chatBox"></div>
-    <div class="send-area">
-      <input id="inp" placeholder="书一言，寄君听……">
-      <button id="sendBtn">寄</button>
+
+<!-- 启动画面 -->
+<div id="splash">
+  <div class="splash-seal">清平</div>
+  <div class="splash-title">清平乐•醉清欢</div>
+  <div class="splash-line"></div>
+  <div class="splash-sub">蝶梦袅袅 · 醉此清欢</div>
+</div>
+
+<!-- 登录 -->
+<div id="authScreen" class="hidden">
+  <div class="auth-logo">樂</div>
+  <div class="auth-title">清平乐•醉清欢</div>
+  <div class="auth-sub">一帮一会 · 一世清欢</div>
+  <div class="auth-panel">
+    <button class="btn btn-wechat" id="btnWechat">微信一键登录</button>
+    <div class="auth-note" id="authNote">
+      本设备仅可注册一个账号，一经注册不可再开小号。<br>
+      首次登录即自动注册并成为本帮会「开发者」。
+    </div>
+  </div>
+</div>
+
+<!-- 主界面 -->
+<div id="app" class="hidden">
+  <div class="app-bg"></div>
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-seal">樂</div>
+      <div class="brand-title">清平乐•醉清欢
+        <small id="topSub">清平世界 · 醉此清欢</small>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button class="icon-btn" id="btnMsg" title="消息">✉</button>
+      <button class="icon-btn" id="btnDrawer" title="设置">☰</button>
     </div>
   </div>
 
-  <script src="./chat.js"></script>
-</body>
-</html>
-let me = JSON.parse(localStorage.getItem("user") || "null");
-let chatTargetUid = null;
-let pollTimer = null;
+  <main>
+    <section class="page active" id="page-tools"></section>
+    <section class="page" id="page-daily"></section>
+    <section class="page" id="page-moments"></section>
+    <section class="page" id="page-poem"></section>
+    <section class="page" id="page-friends"></section>
+  </main>
 
-const chatBox = document.getElementById("chatBox");
-const inp = document.getElementById("inp");
-const sendBtn = document.getElementById("sendBtn");
-
-sendBtn.onclick = async () => {
-  const text = inp.value.trim();
-  if (!text || !chatTargetUid || !me) return;
-  // 这里后面替换成真实接口
-  console.log("发送：", text);
-  inp.value = "";
-};
-
-// 开启轮询
-function startPoll() {
-  if (pollTimer) clearInterval(pollTimer);
-  pollTimer = setInterval(() => {
-    if (!chatTargetUid || !me) return;
-    // 拉取消息，等后端接口写好再补上
-  }, 1500);
-}
-
-// 切换聊天对象（点头像就调用这个）
-function openChat(toUid) {
-  chatTargetUid = toUid;
-  startPoll();
-}
-
-// 渲染消息
-function render(list) {
-  chatBox.innerHTML = "";
-  list.forEach(row => {
-    const div = document.createElement("div");
-    if (row.from_uid === me.id) div.className = "msg-me";
-    else div.className = "msg-other";
-    const span = document.createElement("span");
-    span.className = "bubble";
-    span.innerText = row.content;
-    div.appendChild(span);
-    chatBox.appendChild(div);
-  });
-  chatBox.scrollTop = chatBox.scrollHeight;
-}
-let me = JSON.parse(localStorage.getItem("user") || "null");
-let chatTargetUid = null;
-let pollTimer = null;
-
-const chatBox = document.getElementById("chatBox");
-const inp = document.getElementById("inp");
-const sendBtn = document.getElementById("sendBtn");
-
-sendBtn.onclick = async () => {
-  const text = inp.value.trim();
-  if (!text || !chatTargetUid || !me) return;
-  // 这里后面替换成真实接口
-  console.log("发送：", text);
-  inp.value = "";
-};
-
-// 开启轮询
-function startPoll() {
-  if (pollTimer) clearInterval(pollTimer);
-  pollTimer = setInterval(() => {
-    if (!chatTargetUid || !me) return;
-    // 拉取消息，等后端接口写好再补上
-  }, 1500);
-}
-
-// 切换聊天对象（点头像就调用这个）
-function openChat(toUid) {
-  chatTargetUid = toUid;
-  startPoll();
-}
-
-// 渲染消息
-function render(list) {
-  chatBox.innerHTML = "";
-  list.forEach(row => {
-    const div = document.createElement("div");
-    if (row.from_uid === me.id) div.className = "msg-me";
-    else div.className = "msg-other";
-    const span = document.createElement("span");
-    span.className = "bubble";
-    span.innerText = row.content;
-    div.appendChild(span);
-    chatBox.appendChild(div);
-  });
-  chatBox.scrollTop = chatBox.scrollHeight;
-}
-
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>清平乐•醉清欢</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: sans-serif; background: #f0f2f5; color: #333; padding-bottom: 60px; overflow-x: hidden; }
-        .header { background: #2b7a78; color: white; padding: 15px; text-align: center; font-size: 18px; font-weight: bold; position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; }
-        .header .avatar-btn { width: 30px; height: 30px; border-radius: 50%; background: #fff; color: #2b7a78; line-height: 30px; text-align: center; font-size: 14px; cursor: pointer; }
-        
-        /* 登录遮罩层 */
-        #login-mask { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 999; display: flex; justify-content: center; align-items: center; flex-direction: column; color: white; }
-        #login-mask button { margin-top: 20px; background: #07c160; color: white; padding: 10px 30px; border: none; border-radius: 5px; font-size: 16px; }
-
-        .content { padding: 15px; transition: transform 0.3s; }
-        .tab { display: none; }
-        .tab.active { display: block; }
-        .card { background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        h3 { margin-bottom: 10px; color: #2b7a78; font-size: 16px; border-left: 3px solid #2b7a78; padding-left: 8px; }
-        
-        textarea, input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 10px; font-size: 14px; outline: none; }
-        button { background: #2b7a78; color: white; border: none; padding: 10px 15px; border-radius: 6px; font-size: 14px; width: 100%; font-weight: bold; margin-bottom: 5px; }
-        
-        .nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 60px; background: white; display: flex; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 10; }
-        .nav-item { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 12px; color: #888; cursor: pointer; }
-        .nav-item.active { color: #2b7a78; font-weight: bold; }
-
-        /* 左滑个人中心侧边栏 */
-        .sidebar { position: fixed; top: 0; left: -80%; width: 80%; height: 100%; background: #fff; z-index: 100; transition: left 0.3s; box-shadow: 2px 0 10px rgba(0,0,0,0.1); padding: 20px; overflow-y: auto; }
-        .sidebar.open { left: 0; }
-        .sidebar-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 99; display: none; }
-        .sidebar-bg.open { display: block; }
-        
-        /* 帮会工具子菜单 */
-        .sub-tabs { display: flex; margin-bottom: 15px; border-bottom: 1px solid #eee; }
-        .sub-tab { flex: 1; text-align: center; padding: 10px; font-size: 14px; color: #666; cursor: pointer; }
-        .sub-tab.active { color: #2b7a78; font-weight: bold; border-bottom: 2px solid #2b7a78; }
-        .sub-content { display: none; }
-        .sub-content.active { display: block; }
-
-        .img-preview { width: 100%; border-radius: 6px; margin-top: 8px; }
-    </style>
-</head>
-<body>
-
-<!-- 模拟登录 -->
-<div id="login-mask">
-    <h2>欢迎来到清平乐</h2>
-    <p style="margin-top:10px; font-size:12px; color:#aaa;">(演示版本，无需真实账号)</p>
-    <button onclick="doLogin()">模拟微信一键登录</button>
+  <nav class="tabbar" id="tabbar">
+    <div class="tab-item active" data-tab="tools"><div class="seal">帮</div>帮会工具</div>
+    <div class="tab-item" data-tab="daily"><div class="seal">清</div>每日清平</div>
+    <div class="tab-item" data-tab="moments"><div class="seal">花</div>花繁若轩</div>
+    <div class="tab-item" data-tab="poem"><div class="seal">诗</div>蝶梦袅袅</div>
+    <div class="tab-item" data-tab="friends"><div class="seal">友</div>好友</div>
+  </nav>
 </div>
 
-<!-- 侧边栏 (个人中心 & 好友) -->
-<div class="sidebar-bg" id="sidebarBg" onclick="toggleSidebar()"></div>
-<div class="sidebar" id="sidebar">
-    <h2 style="text-align:center; color:#2b7a78; margin-bottom:20px;">个人设置</h2>
-    <div style="text-align:center; margin-bottom:20px;">
-        <div style="width:80px; height:80px; border-radius:50%; background:#ddd; margin:0 auto 10px; line-height:80px; color:#999; font-size:12px;">头像</div>
-        <input type="file" id="avatarUpload" style="display:none" onchange="alert('本地头像已更新！')">
-        <button onclick="document.getElementById('avatarUpload').click()" style="width:50%; margin:0 auto; font-size:12px;">更换头像</button>
+<!-- 抽屉 -->
+<div id="drawerMask"></div>
+<aside id="drawer">
+  <div class="drawer-head">
+    <div class="dh-title">个人设置</div>
+    <div class="dh-me">
+      <img id="dhAvatar" alt="头像">
+      <div>
+        <div class="dh-name" id="dhName">—</div>
+        <div class="dh-sig" id="dhSig">—</div>
+      </div>
     </div>
-    <div style="margin-bottom:15px;">
-        <label style="font-size:14px;">个性签名：</label>
-        <input type="text" id="signature" placeholder="输入签名..." value="本知好帅">
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+</aside>
+
+<!-- 弹层 -->
+<div id="modalMask"><div class="modal" id="modalBox"></div></div>
+<div id="sheetMask"><div class="sheet" id="sheetBox"></div></div>
+<div class="toast" id="toast"></div>
+
+<!-- 聊天 -->
+<section id="chatView">
+  <div class="chat-head">
+    <button class="back" id="chatBack">‹</button>
+    <div class="ch-main">
+      <div class="ch-name" id="chatName">—</div>
+      <div class="ch-sub" id="chatSub"></div>
     </div>
-    
-    <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
-    <h3 style="font-size:15px; margin-bottom:10px; border:none; padding:0;">社交与设置</h3>
-    <button onclick="alert('大群聊：清平乐总群 (58人)\n(真实群聊需服务器)')" style="font-size:12px;">进入大群聊</button>
-    <button onclick="alert('暂无好友。\n点击头像可私聊、加好友（需服务器支持）')" style="font-size:12px;">我的好友列表</button>
-    <button onclick="alert('仅开发者/群主可发布公告、删帖。')" style="font-size:12px;">管理员面板 (展示)</button>
-    <button onclick="alert('自定义聊天背景/音乐（仅本机生效）')" style="font-size:12px;">自定义背景与音乐</button>
-    <button onclick="toggleSidebar()" style="background:#888; margin-top:20px;">关闭侧边栏</button>
-</div>
+    <button class="more" id="chatMore">⋯</button>
+  </div>
+  <div class="chat-body" id="chatBody"></div>
+  <div class="chat-input">
+    <button class="plus" id="chatImg">＋</button>
+    <input id="chatInput" placeholder="书一言，寄君听……" autocomplete="off">
+    <button class="send" id="chatSend">寄</button>
+  </div>
+</section>
 
-<!-- 头部 -->
-<div class="header">
-    <div class="avatar-btn" onclick="toggleSidebar()">☰</div>
-    <span>清平乐•醉清欢</span>
-    <div style="width:30px;"></div>
-</div>
+<input type="file" id="filePicker" accept="image/*" class="hidden">
+<input type="file" id="filePickerAudio" accept="audio/*" class="hidden">
 
-<div class="content">
-    <!-- 1. 帮会工具 -->
-    <div id="tab1" class="tab active">
-        <div class="sub-tabs">
-            <div class="sub-tab active" onclick="switchSub(1)">清平准则</div>
-            <div class="sub-tab" onclick="switchSub(2)">接龙</div>
-            <div class="sub-tab" onclick="switchSub(3)">投票</div>
-            <div class="sub-tab" onclick="switchSub(4)">统计</div>
-        </div>
-        
-        <div id="sub1" class="sub-content active">
-            <div class="card">
-                <textarea id="rules" style="height: 300px; border:none; resize:none;"></textarea>
-            </div>
-        </div>
-        <div id="sub2" class="sub-content">
-            <div class="card">
-                <h3>帮战接龙</h3>
-                <p style="font-size:12px; color:#e74c3c; margin-bottom:10px;">每人限接一次，不可匿名。</p>
-                <input type="text" id="signupName" placeholder="输入游戏ID报名">
-                <button onclick="addSignup()">确认报名</button>
-                <div id="signupList" style="margin-top: 15px;"></div>
-            </div>
-        </div>
-        <div id="sub3" class="sub-content">
-            <div class="card">
-                <h3>帮会投票</h3>
-                <p style="font-size:12px; color:#888; margin-bottom:10px;">管理员发布，限时24小时自动结算。</p>
-                <button onclick="alert('【演示】投票功能需后台支持。')">发起新投票 (管理员)</button>
-            </div>
-        </div>
-        <div id="sub4" class="sub-content">
-            <div class="card">
-                <h3>统计表</h3>
-                <p style="font-size:12px; color:#888; margin-bottom:10px;">每人日限参加一次。</p>
-                <button onclick="alert('已计入今日统计（本地记录）')">今日打卡</button>
-            </div>
-        </div>
-    </div>
+<script>'use strict';
+/* =========================================================
+   清平乐•醉清欢  ·  帮会社区（纯前端本地数据版）
+   ========================================================= */
 
-    <!-- 2. 每日清平 -->
-    <div id="tab2" class="tab">
-        <div class="card" style="background:#e8f4f8; border:1px solid #2b7a78;">
-            <h3 style="color:#2b7a78;">今日公告</h3>
-            <p style="font-size:12px; color:#666; margin-bottom:5px;">(演示：任何人可发，真实环境仅限管理员)</p>
-            <textarea id="noticeInput" placeholder="发布今日公告..."></textarea>
-            <button onclick="addNotice()">发布公告</button>
-            <div id="noticeList" style="margin-top:10px; font-size:14px;"></div>
-        </div>
-        <div class="card">
-            <h3>每日诗词赏析</h3>
-            <p id="poemText" style="font-size:15px; line-height:1.6; color:#555; font-style:italic;"></p>
-        </div>
-        <div class="card">
-            <h3>昨日风云榜 (模拟)</h3>
-            <p style="font-size:13px; line-height:1.8;">
-                🏆 人气榜：<b>本知</b> (访问量 1024)<br>
-                🌸 风华榜：<b>花繁若轩</b> (点赞 520)
-            </p>
-        </div>
-    </div>
+const KEY = 'qlz_state_v2';
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const pad = n => (n < 10 ? '0' + n : '' + n);
+const ymd = (x) => { const d = x instanceof Date ? x : new Date(x == null ? Date.now() : x); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+const dayShift = n => { const d = new Date(); d.setDate(d.getDate() + n); return d; };
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const uid = p => p + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
-    <!-- 3. 花繁若轩 (朋友圈带图) -->
-    <div id="tab3" class="tab">
-        <div class="card">
-            <h3>发布动态</h3>
-            <textarea id="postContent" placeholder="分享点什么..." style="height: 60px;"></textarea>
-            <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px;">
-                <input type="file" id="postImage" accept="image/*" style="display:none" onchange="previewPostImage(event)">
-                <button onclick="document.getElementById('postImage').click()" style="width:100px; font-size:12px; margin:0;">+ 图片</button>
-                <span id="imgPreviewName" style="font-size:12px; color:#07c160;"></span>
-            </div>
-            <button onclick="addPost()">发布</button>
-        </div>
-        <div id="postList"></div>
-    </div>
+function fmtTime(ts) {
+  const d = new Date(ts), now = new Date();
+  const diff = (now - d) / 1000;
+  if (diff < 60) return '刚刚';
+  if (diff < 3600) return Math.floor(diff / 60) + ' 分钟前';
+  if (ymd(d) === ymd(now)) return '今日 ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  if (ymd(d) === ymd(dayShift(-1))) return '昨日 ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+  return `${d.getMonth() + 1}月${d.getDate()}日 ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function fmtFull(ts) {
+  const d = new Date(ts);
+  return `${d.getMonth() + 1}月${d.getDate()}日 ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function leftText(ts) {
+  const ms = ts - Date.now();
+  if (ms <= 0) return '已截止';
+  const h = Math.floor(ms / 3600000), m = Math.floor(ms % 3600000 / 60000);
+  return h > 0 ? `余 ${h} 小时 ${m} 分` : `余 ${m} 分`;
+}
 
-    <!-- 4. 蝶梦袅袅 (占位) -->
-    <div id="tab4" class="tab">
-        <div class="card">
-            <h3>蝶梦袅袅</h3>
-            <p style="text-align:center; color:#888; font-size:14px; padding:20px 0;">—— 岁月静好，现世安稳 ——</p>
-        </div>
-    </div>
-</div>
+/* ---------- 头像 / 插画 ---------- */
+function svgAvatar(text, a, b) {
+  const t = (text || '客').slice(0, 2);
+  const g = [['#2f5d50', '#8aa79b'], ['#a8473c', '#d8a68f'], ['#3d5a80', '#8fb0c9'],
+  ['#7a5c3e', '#cbb08a'], ['#5c6b4a', '#adbf8f'], ['#6b4a63', '#c39bb0'],
+  ['#2e4a4a', '#93b3ad'], ['#8a5a2b', '#d9b884']][(t.charCodeAt(0) || 0) % 8];
+  const c1 = a || g[0], c2 = b || g[1];
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${c1}"/><stop offset="1" stop-color="${c2}"/></linearGradient></defs><rect width="128" height="128" fill="url(#g)"/><text x="64" y="82" font-size="48" font-family="serif" fill="#fdf8ec" text-anchor="middle">${t}</text></svg>`;
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
+function svgArt(kind) {
+  const arts = {
+    a: ['#e9e0cd', '#9db3a5', '#4f6a5d'],
+    b: ['#f2e5d2', '#c7a884', '#8a6242'],
+    c: ['#dfe6e2', '#8a9c93', '#41544b'],
+    d: ['#f4e9df', '#bfa08c', '#7c5a4c']
+  }[kind] || ['#e9e0cd', '#9db3a5', '#4f6a5d'];
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="450">
+<defs><linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${arts[0]}"/><stop offset="1" stop-color="#fffaf1"/></linearGradient></defs>
+<rect width="600" height="450" fill="url(#s)"/>
+<circle cx="440" cy="110" r="46" fill="#f7e3c6" opacity=".85"/>
+<path d="M0 330 L110 230 L200 305 L300 205 L400 300 L490 240 L600 320 L600 450 L0 450Z" fill="${arts[2]}" opacity=".55"/>
+<path d="M0 380 L120 300 L230 370 L340 285 L460 365 L600 320 L600 450 L0 450Z" fill="${arts[2]}" opacity=".35"/>
+<path d="M60 250 q18 -34 36 0 q-18 -12 -36 0" stroke="${arts[2]}" fill="none" opacity=".5"/>
+<text x="34" y="404" font-size="26" font-family="serif" fill="#5c4a35" opacity=".55">清平山水</text>
+</svg>`;
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+}
 
-<!-- 底部导航 -->
-<div class="nav">
-    <div class="nav-item active" onclick="switchTab(1)">帮会工具</div>
-    <div class="nav-item" onclick="switchTab(2)">每日清平</div>
-    <div class="nav-item" onclick="switchTab(3)">花繁若轩</div>
-    <div class="nav-item" onclick="switchTab(4)">蝶梦袅袅</div>
-</div>
+/* ---------- 诗词库 ---------- */
+const POEMS = [
+  { t: '清平乐·村居', a: '辛弃疾 · 宋', c: '茅檐低小，溪上青青草。\n醉里吴音相媚好，白发谁家翁媪？\n大儿锄豆溪东，中儿正织鸡笼。\n最喜小儿亡赖，溪头卧剥莲蓬。', p: '一溪青草、几声吴语，寻常农家的黄昏被写得温软可亲。清平之乐不在庙堂，而在这一屋老小各安其事的烟火里。愿我清平乐诸君，也各有这样一畦可耕的田、一盏可温的灯。' },
+  { t: '如梦令·昨夜雨疏风骤', a: '李清照 · 宋', c: '昨夜雨疏风骤，浓睡不消残酒。\n试问卷帘人，却道海棠依旧。\n知否，知否？应是绿肥红瘦。', p: '一问一答之间，惜花即惜时。清照以最轻的口吻写最深的怅然——花事已过，人事亦然。读此词宜在雨后，慢一点，再慢一点。' },
+  { t: '定风波·莫听穿林打叶声', a: '苏轼 · 宋', c: '莫听穿林打叶声，何妨吟啸且徐行。\n竹杖芒鞋轻胜马，谁怕？一蓑烟雨任平生。\n料峭春风吹酒醒，微冷，山头斜照却相迎。\n回首向来萧瑟处，归去，也无风雨也无晴。', p: '东坡把一场狼狈的雨，走成了自己的道场。所谓豁达，不是没有风雨，而是风雨里仍能徐行、仍能吟啸。帮会起落、人事聚散，亦可作此观。' },
+  { t: '木兰花令·拟古决绝词', a: '纳兰性德 · 清', c: '人生若只如初见，何事秋风悲画扇。\n等闲变却故人心，却道故人心易变。\n骊山语罢清宵半，泪雨霖铃终不怨。\n何如薄幸锦衣郎，比翼连枝当日愿。', p: '容若最擅写"初见"二字的分量。所有的遗憾，都由最初那一眼的明亮反照出来。愿聚时尽兴，散时体面，不必以怨怼作别。' },
+  { t: '行路难·其一', a: '李白 · 唐', c: '金樽清酒斗十千，玉盘珍羞直万钱。\n停杯投箸不能食，拔剑四顾心茫然。\n欲渡黄河冰塞川，将登太行雪满山。\n闲来垂钓碧溪上，忽复乘舟梦日边。\n行路难！行路难！多歧路，今安在？\n长风破浪会有时，直挂云帆济沧海。', p: '太白把失意写得极响，又把希望写得极阔。前六句是堵，最后两句是开。人在低谷时读它，能借来一点"直挂云帆"的气。' },
+  { t: '饮酒·其五', a: '陶渊明 · 晋', c: '结庐在人境，而无车马喧。\n问君何能尔？心远地自偏。\n采菊东篱下，悠然见南山。\n山气日夕佳，飞鸟相与还。\n此中有真意，欲辨已忘言。', p: '"心远地自偏"五字，是清平乐最好的注脚。闹市亦可有山林，喧哗中守一处清静，便是自在一方。' },
+  { t: '一剪梅·红藕香残玉簟秋', a: '李清照 · 宋', c: '红藕香残玉簟秋。轻解罗裳，独上兰舟。\n云中谁寄锦书来？雁字回时，月满西楼。\n花自飘零水自流。一种相思，两处闲愁。\n此情无计可消除，才下眉头，却上心头。', p: '写相思写得极克制，却处处是疼。"才下眉头，却上心头"——情绪原来有重量，会挪位置。写给远方的人，最合适。' },
+  { t: '山居秋暝', a: '王维 · 唐', c: '空山新雨后，天气晚来秋。\n明月松间照，清泉石上流。\n竹喧归浣女，莲动下渔舟。\n随意春芳歇，王孙自可留。', p: '摩诘的诗是画，也是禅。雨、月、松、泉，每一样都干净。读它宜在夜里，关一盏灯，留一点月光。' },
+  { t: '卜算子·咏梅', a: '陆游 · 宋', c: '驿外断桥边，寂寞开无主。\n已是黄昏独自愁，更著风和雨。\n无意苦争春，一任群芳妒。\n零落成泥碾作尘，只有香如故。', p: '梅之贵，不在争春，而在不争。即便零落成泥，香仍如故——这是骨气，也是清平乐所愿守的分寸。' },
+  { t: '青玉案·元夕', a: '辛弃疾 · 宋', c: '东风夜放花千树，更吹落、星如雨。\n宝马雕车香满路。凤箫声动，玉壶光转，一夜鱼龙舞。\n蛾儿雪柳黄金缕，笑语盈盈暗香去。\n众里寻他千百度，蓦然回首，那人却在，灯火阑珊处。', p: '喧闹到极处，忽然一静。最盛大的热闹里藏着一个转身。人生多半如此：寻了千百度，回头才见。' }
+];
 
-<script>
-    // 登录逻辑
-    if(localStorage.getItem('is_logged') === 'yes') {
-        document.getElementById('login-mask').style.display = 'none';
+/* ---------- 默认帮规 ---------- */
+const DEFAULT_RULES = `一、清平乐者，以清为骨，以平为怀，以乐为归。
+二、11月28日起，帮中一应事务，交由当任群主与管理员共议定夺。
+三、团结友爱，互助和谐。不以辱骂、诈骗、挑拨为手段损害帮会与他人。
+四、接龙必实名，一人一接；投票、统计各抒己见，不作人身攻讦。
+五、朋友圈可晒山水与心事，亦可附图；不得盗图冒名，不得攻击他人。
+六、犯前三、四、五条者，管理员可删其动态与图片，重者逐出清平，终身不得复入。
+七、向阳而生，快乐成长。愿诸君在此，各得一段醉清欢。`;
+
+/* ---------- 状态 ---------- */
+let state;
+
+function loadState() {
+  try { const raw = localStorage.getItem(KEY); if (raw) return JSON.parse(raw); } catch (e) { }
+  return null;
+}
+function saveState() {
+  try { localStorage.setItem(KEY, JSON.stringify(state)); }
+  catch (e) { toast('本地存储空间不足，请删除部分图片后再试'); }
+}
+
+function npcUsers() {
+  return [
+    { id: 'u_jyz', name: '云舟', sig: '清风入怀，云舟自渡。', seedKey: 'jyz' },
+    { id: 'u_hf', name: '花繁若轩', sig: '花开繁处，自有清欢。', seedKey: 'hf' },
+    { id: 'u_dm', name: '蝶梦', sig: '一帘蝶梦，半卷清词。', seedKey: 'dm' },
+    { id: 'u_jin', name: '槿', sig: '槿花朝开暮落，惜取眼前。', seedKey: 'jin' },
+    { id: 'u_huan', name: '寰', sig: '寰宇为笺，落笔成诗。', seedKey: 'huan' },
+    { id: 'u_qing', name: '清和', sig: '清和天气，人间好时节。', seedKey: 'qing' },
+    { id: 'u_muyu', name: '沐雨', sig: '沐一场旧雨，等一个故人。', seedKey: 'muyu' },
+    { id: 'u_zhuyin', name: '竹隐', sig: '竹影深处，藏一段闲。', seedKey: 'zhuyin' },
+    { id: 'u_tingxue', name: '听雪', sig: '听雪落无声，亦听人心。', seedKey: 'tingxue' },
+    { id: 'u_nanzhi', name: '南枝', sig: '南枝向暖，北枝生寒。', seedKey: 'nanzhi' },
+    { id: 'u_yanhui', name: '雁回', sig: '雁字回时，月满西楼。', seedKey: 'yanhui' }
+  ].map((u, i) => ({
+    ...u,
+    avatar: svgAvatar(u.name),
+    bg: null, music: null, splash: null, chatBg: null, chatMusic: null,
+    role: 'member', friends: [], createdAt: Date.now() - (30 - i) * 86400000,
+    visitsTotal: 0, wxId: 'wx_' + u.id
+  }));
+}
+
+function baseState() {
+  const users = npcUsers();
+  const ids = users.map(u => u.id);
+  const now = Date.now();
+  const y = ymd(dayShift(-1));
+  const visits = {}, likes = {};
+  // 昨日榜单演示数据
+  visits[y] = { u_jyz: 128, u_hf: 96, u_dm: 61, u_jin: 44, u_huan: 33, u_qing: 21, u_muyu: 18 };
+  likes[y] = { u_hf: 42, u_dm: 31, u_jyz: 27, u_huan: 15, u_tingxue: 9 };
+  likes[ymd()] = { u_hf: 6, u_dm: 3 };
+
+  users.forEach(u => { u.visitsTotal = Object.values(visits).reduce((s, m) => s + (m[u.id] || 0), 0); });
+
+  const posts = [
+    {
+      id: 'p_hf1', uid: 'u_hf', time: now - 23 * 3600000,
+      content: '今日山色极好，云在肩头，风在袖里。\n发一张昨日画的小景，与诸君共赏清欢。',
+      imgs: [svgArt('a')], likes: ['u_jyz', 'u_dm', 'u_jin', 'u_huan', 'u_qing', 'u_muyu']
+    },
+    {
+      id: 'p_dm1', uid: 'u_dm', time: now - 9 * 3600000,
+      content: '新抄了一阕《如梦令》，墨还未干。\n若你也爱清照，来我主页坐坐。',
+      imgs: [], likes: ['u_hf', 'u_jyz', 'u_tingxue', 'u_nanzhi']
+    },
+    {
+      id: 'p_jin1', uid: 'u_jin', time: now - 3 * 3600000,
+      content: '帮里的接龙记得接呀，一人一接，不可匿名——这是咱清平的规矩。',
+      imgs: [svgArt('b')], likes: ['u_hf', 'u_muyu']
+    },
+    {
+      id: 'p_yan1', uid: 'u_yanhui', time: now - 40 * 60000,
+      content: '秋风起，雁南回。愿各位夜里都有灯光，白天都有去处。',
+      imgs: [], likes: ['u_jyz']
     }
-    function doLogin() {
-        localStorage.setItem('is_logged', 'yes');
-        document.getElementById('login-mask').style.display = 'none';
-    }
+  ];
 
-    // 侧边栏逻辑
-    function toggleSidebar() {
-        document.getElementById('sidebar').classList.toggle('open');
-        document.getElementById('sidebarBg').classList.toggle('open');
-    }
+  return {
+    version: 2, registered: false, me: null, users, posts,
+    rules: DEFAULT_RULES,
+    signups: [{
+      id: 's_1', title: '本周帮战接龙 · 清平乐出战名单', creatorId: null, creatorName: '清平乐·司礼',
+      pinned: true, createdAt: now - 5 * 3600000, expiresAt: now + 19 * 3600000, closed: false,
+      entries: [
+        { uid: 'u_jyz', name: '云舟', time: now - 4 * 3600000, note: '先锋' },
+        { uid: 'u_jin', name: '槿', time: now - 3 * 3600000, note: '后排' },
+        { uid: 'u_huan', name: '寰', time: now - 2 * 3600000, note: '策应' }
+      ]
+    }],
+    polls: [{
+      id: 'v_1', title: '下月帮会活动，你想去哪儿？', creatorId: null, creatorName: '清平乐·司礼',
+      pinned: true, anonymous: false, createdAt: now - 6 * 3600000, expiresAt: now + 18 * 3600000,
+      closed: false, options: [
+        { text: '夜游江南水乡', votes: ['u_jyz', 'u_hf', 'u_dm'] },
+        { text: '山中露营赏星', votes: ['u_jin', 'u_huan'] },
+        { text: '线上诗词雅集', votes: ['u_qing', 'u_tingxue', 'u_muyu'] }
+      ]
+    }],
+    stats: [{
+      id: 't_1', title: '本周帮贡统计表', creatorId: null, creatorName: '清平乐·司礼',
+      pinned: true, anonymous: true, createdAt: now - 8 * 3600000, expiresAt: now + 16 * 3600000,
+      closed: false, desc: '请填写本周帮贡与在线时长，每人每天限填一次，可匿名。',
+      fields: [{ key: 'gong', label: '本周帮贡' }, { key: 'hour', label: '在线时长（小时）' }],
+      entries: [{ uid: 'u_jyz', anonymous: false, values: { gong: '520', hour: '12' }, time: now - 5 * 3600000 }]
+    }],
+    notices: [{
+      id: 'n_1', authorId: null, authorName: '清平乐·司礼', pinned: true, published: true,
+      time: now - 26 * 3600000, publishAt: null,
+      content: '【开帮公告】\n清平乐自今日起，一应事务由群主与管理员共议。\n接龙必实名、投票可匿名、统计每日一填。愿诸君在此，各得一段醉清欢。',
+      imgs: []
+    }],
+    groups: [], groupMsgs: {}, dm: {}, reqs: [],
+    visits, likes, seq: 0
+  };
+}
 
-    // 主 Tab 切换
-    function switchTab(num) {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        document.getElementById('tab' + num).classList.add('active');
-        document.querySelectorAll('.nav-item')[num - 1].classList.add('active');
-    }
+function boot() {
+  state = loadState();
+  if (!state) { state = baseState(); saveState(); }
+  if (!state.users) state = baseState();
+}
 
-    // 工具子 Tab 切换
-    function switchSub(num) {
-        document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
-        document.querySelectorAll('.sub-content').forEach(c => c.classList.remove('active'));
-        document.querySelectorAll('.sub-tab')[num - 1].classList.add('active');
-        document.getElementById('sub' + num).classList.add('active');
-    }
+/* ---------- 当前用户 ---------- */
+const me = () => state.users.find(u => u.id === state.me);
+const userById = id => state.users.find(u => u.id === id);
+const ROLE = { developer: '开发者', owner: '群主', admin: '管理员', member: '成员' };
+const isAdmin = u => !!u && (u.role === 'developer' || u.role === 'owner' || u.role === 'admin');
+const adminList = () => state.users.filter(isAdmin);
+const avatarOf = u => (u && u.avatar) || svgAvatar((u && u.name) || '客');
+const ADMIN_CAP = 6;
 
-    // 帮规
-    var rulesInput = document.getElementById('rules');
-    rulesInput.value = localStorage.getItem('ql_rules') || '1. 11月27日之前，听二当家的；11月28日起，清平乐一应事务，交由清平乐即任大当家定夺。\n2. 团结友爱，互助和谐。\n3. 任何成员不得以辱骂、诈骗等为手段损害帮会利益，违者即刻踢除，终身不得入清平。\n4. 向阳而生，快乐成长。';
-    rulesInput.addEventListener('input', function() { localStorage.setItem('ql_rules', this.value); });
+/* ---------- UI 通用 ---------- */
+let toastTimer = null;
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+}
+function openModal(html) { $('#modalBox').innerHTML = html; $('#modalMask').classList.add('show'); }
+function closeModal() { $('#modalMask').classList.remove('show'); $('#modalBox').innerHTML = ''; stopProfileMusic(); }
+function openSheet(html) { $('#sheetBox').innerHTML = html; $('#sheetMask').classList.add('show'); }
+function closeSheet() { $('#sheetMask').classList.remove('show'); $('#sheetBox').innerHTML = ''; }
+function confirmBox(title, msg, onOk, okText = '确定') {
+  openModal(`<h3>${esc(title)}</h3><p style="text-align:center">${esc(msg)}</p>
+    <div class="row mt12"><button class="btn btn-ghost" onclick="closeModal()">取消</button>
+    <button class="btn btn-danger" id="cfmOk">${esc(okText)}</button></div>`);
+  $('#cfmOk').onclick = () => { closeModal(); onOk(); };
+}
+function fieldHtml(f) {
+  const id = 'f_' + f.key;
+  let inner = '';
+  if (f.type === 'textarea') inner = `<textarea class="ta" id="${id}" rows="${f.rows || 3}" placeholder="${esc(f.ph || '')}">${esc(f.value || '')}</textarea>`;
+  else if (f.type === 'datetime') inner = `<input class="inp" type="datetime-local" id="${id}" value="${esc(f.value || '')}">`;
+  else if (f.type === 'checkbox') inner = `<label style="display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--ink-2)"><input type="checkbox" id="${id}" ${f.value ? 'checked' : ''}>${esc(f.label)}</label>`;
+  else if (f.type === 'select') inner = `<select class="inp" id="${id}">${(f.choices || []).map(c => `<option value="${esc(c.v)}">${esc(c.t)}</option>`).join('')}</select>`;
+  else inner = `<input class="inp" type="${f.type === 'number' ? 'number' : 'text'}" id="${id}" placeholder="${esc(f.ph || '')}" value="${esc(f.value || '')}">`;
+  const label = f.type === 'checkbox' ? '' : `<div class="hint" style="margin-bottom:5px">${esc(f.label)}</div>`;
+  return `<div style="margin-bottom:12px">${label}${inner}</div>`;
+}
+function askForm(opts) {
+  const { title, desc = '', fields = [], ok = '确定', onSubmit } = opts;
+  openModal(`<h3>${esc(title)}</h3>${desc ? `<p style="margin-bottom:12px">${esc(desc)}</p>` : ''}
+    ${fields.map(fieldHtml).join('')}
+    <div class="row mt12"><button class="btn btn-ghost" onclick="closeModal()">取消</button>
+    <button class="btn btn-primary" id="formOk">${esc(ok)}</button></div>`);
+  $('#formOk').onclick = () => {
+    const v = {};
+    fields.forEach(f => {
+      const n = $('#f_' + f.key);
+      v[f.key] = f.type === 'checkbox' ? n.checked : n.value.trim();
+    });
+    const r = onSubmit(v);
+    if (r !== false) closeModal();
+  };
+}
 
-    // 接龙
-    var signups = JSON.parse(localStorage.getItem('ql_signups') || '[]');
-    function renderSignups() {
-        var html = '';
-        if(signups.length === 0) html = '<div style="color:#999;font-size:14px;text-align:center;">暂无报名</div>';
-        signups.forEach((name, index) => { 
-            html += `<div style="padding:8px 0; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
-                        <span style="font-size:14px;">${index+1}. ${name}</span>
-                        <button style="width:auto; padding:2px 8px; font-size:12px; background:#e74c3c; margin:0;" onclick="delSignup(${index})">取消</button>
-                    </div>`; 
-        });
-        document.getElementById('signupList').innerHTML = html;
-    }
-    function addSignup() {
-        var name = document.getElementById('signupName').value.trim();
-        if(!name) return;
-        if(signups.includes(name)) { alert('你已经报名过了，每人限接一次！'); return; }
-        signups.push(name); 
-        localStorage.setItem('ql_signups', JSON.stringify(signups)); 
-        document.getElementById('signupName').value = ''; 
-        renderSignups(); 
-    }
-    function delSignup(index) { 
-        signups.splice(index, 1); 
-        localStorage.setItem('ql_signups', JSON.stringify(signups)); 
-        renderSignups(); 
-    }
-
-    // 公告
-    var notices = JSON.parse(localStorage.getItem('ql_notices') || '[]');
-    function renderNotices() {
-        var html = '';
-        notices.forEach(n => { html += `<div style="margin-top:5px; padding:8px; background:#fff; border-radius:4px; font-size:13px;">${n}</div>`; });
-        document.getElementById('noticeList').innerHTML = html;
-    }
-    function addNotice() {
-        var txt = document.getElementById('noticeInput').value.trim();
-        if(txt) { notices.unshift(txt); localStorage.setItem('ql_notices', JSON.stringify(notices)); document.getElementById('noticeInput').value=''; renderNotices(); }
-    }
-
-    // 诗词
-    var poems = [
-      "春风轻许流年意，星雨瑶落锦书行。——季云知" 
-      "昨夜雨疏风骤，浓睡不消残酒。——李清照",
-        "竹杖芒鞋轻胜马，谁怕？一蓑烟雨任平生。——苏轼",
-        "人生若只如初见，何事秋风悲画扇。——纳兰性德",
-        "乘风破浪会有时，直挂云帆济沧海。——李白"
-    ];
-    document.getElementById('poemText').innerText = poems[new Date().getDate() % poems.length];
-
-    // 朋友圈 (带图)
-    var posts = JSON.parse(localStorage.getItem('ql_posts') || '[]');
-    var currentBase64Img = '';
-
-    function previewPostImage(event) {
-        var file = event.target.files[0];
-        if(!file) return;
-        if(file.size > 1024 * 1024) { alert("正常发，没事。内存有点小，本知在尽量优化，烦请谅解，若惹得咱成员不太开心的话，不急不急，咱去欺负全服去，乖"); return; }
-        var reader = new FileReader();
-        reader.onload = function(e) {
-            currentBase64Img = e.target.result;
-            document.getElementById('imgPreviewName').innerText = "已附图片";
-        };
-        reader.readAsDataURL(file);
-    }
-
-    function renderPosts() {
-        var html = '';
-        if(posts.length === 0) html = '<div style="color:#999;font-size:14px;text-align:center;">暂无动态</div>';
-        posts.forEach((item, index) => {
-            var imgHtml = item.img ? `<img src="${item.img}" class="img-preview">` : '';
-            html += `
-            <div class="card" style="padding:15px;">
-                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                    <b style="font-size:14px; color:#2b7a78;">本知</b>
-                    <span style="font-size:12px; color:#999;">${item.time}</span>
-                </div>
-                <div style="font-size:14px; line-height:1.5;">${item.content}</div>
-                ${imgHtml}
-                <div style="text-align:right; margin-top:10px;">
-                    <button style="width:auto; padding:3px 8px; font-size:12px; background:#e74c3c; margin:0;" onclick="delPost(${index})">删除</button>
-                </div>
-            </div>`;
-        });
-        document.getElementById('postList').innerHTML = html;
-    }
-
-    function addPost() {
-        var content = document.getElementById('postContent').value.trim();
-        if(!content && !currentBase64Img) return;
-        var time = new Date().toLocaleString();
-        posts.unshift({content: content, time: time, img: currentBase64Img});
-        localStorage.setItem('ql_posts', JSON.stringify(posts));
-        document.getElementById('postContent').value = '';
-        document.getElementById('imgPreviewName').innerText = '';
-        currentBase64Img = '';
-        document.getElementById('postImage').value = '';
-        renderPosts();
-    }
-
-    function delPost(index) {
-        posts.splice(index, 1);
-        localStorage.setItem('ql_posts', JSON.stringify(posts));
-        renderPosts();
-    }
-
-    // 初始化
-    window.onload = function() { 
-        renderSignups(); 
-        renderPosts(); 
-        renderNotices();
+/* ---------- 图片压缩 ---------- */
+function compress(file, maxW, quality) {
+  return new Promise((res, rej) => {
+    const fr = new FileReader();
+    fr.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const s = Math.min(1, maxW / Math.max(img.width, img.height));
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        res(c.toDataURL('image/jpeg', quality || 0.82));
+      };
+      img.onerror = rej; img.src = fr.result;
     };
+    fr.onerror = rej; fr.readAsDataURL(file);
+  });
+}
+function pickImage(cb, maxW = 1200) {
+  const p = $('#filePicker');
+  p.value = '';
+  p.onchange = async () => {
+    const f = p.files[0]; if (!f) return;
+    try { toast('图片处理中…'); cb(await compress(f, maxW, 0.84)); }
+    catch (e) { toast('图片读取失败'); }
+  };
+  p.click();
+}
+function pickAudio(cb) {
+  const p = $('#filePickerAudio');
+  p.value = '';
+  p.onchange = () => {
+    const f = p.files[0]; if (!f) return;
+    if (f.size > 2.6 * 1024 * 1024) { toast('音频请小于 2.6MB（本地存储有限）'); return; }
+    const fr = new FileReader();
+    fr.onload = () => cb(fr.result, f.name);
+    fr.readAsDataURL(f);
+  };
+  p.click();
+}
+
+/* ---------- 启动画面 ---------- */
+function showSplash() {
+  const u = me();
+  const splash = $('#splash');
+  if (u && u.splash) { splash.style.backgroundImage = `url(${u.splash})`; }
+  splash.classList.remove('fade');
+  setTimeout(() => {
+    splash.classList.add('fade');
+    setTimeout(() => {
+      if (state.me && me()) enterApp(); else showAuth();
+    }, 300);
+  }, 1500);
+}
+function showAuth() {
+  $('#app').classList.add('hidden');
+  const auth = $('#authScreen');
+  auth.classList.remove('hidden');
+  const reg = state.registered;
+  $('#authNote').innerHTML = reg
+    ? `本设备已注册账号「${esc((me() || state.users.find(u => u.id === state.regUid) || {}).name || '')}」。<br>请用微信登录继续，本帮会不发小号。`
+    : `本设备仅可注册一个账号，一经注册不可再开小号。<br>首次登录即自动注册，并成为本帮会「开发者」。`;
+  $('#btnWechat').textContent = reg ? '微信登录' : '微信一键注册登录';
+  auth.classList.remove('hidden');
+}
+
+/* ---------- 微信登录 ---------- */
+function wechatFlow() {
+  const reg = state.registered;
+  if (reg) {
+    openModal(`<div style="text-align:center">
+      <div style="font-size:40px;color:#07c160;margin-bottom:10px">✦</div>
+      <h3>微信授权</h3><p style="text-align:center">清平乐•醉清欢 申请获取你的公开信息（昵称、头像）</p>
+      <div class="row mt12"><button class="btn btn-ghost" onclick="closeModal()">取消</button>
+      <button class="btn btn-wechat" id="wxOk">允许</button></div></div>`);
+    $('#wxOk').onclick = () => {
+      closeModal();
+      state.me = state.regUid;
+      saveState();
+      toast('欢迎回来，' + me().name);
+      enterApp();
+    };
+    return;
+  }
+  openModal(`<div class="wechat-card" style="margin:0 auto">
+    <div class="wx-head">微信授权登录</div>
+    <div class="wx-body">
+      <div class="wx-app">
+        <div class="wx-app-icon">樂</div>
+        <div><div class="wx-app-name">清平乐•醉清欢</div><div class="wx-app-desc">申请获取你的昵称、头像</div></div>
+      </div>
+      <div class="wx-row"><div class="lbl">昵称</div><div class="val"><input class="inp" id="wxName" placeholder="请输入你的微信昵称" style="margin:0"></div></div>
+      <div class="wx-row"><div class="lbl">头像</div><div class="val"><div class="row"><span class="hint" id="wxAvatarTip">使用默认水墨头像</span>
+        <button class="btn btn-mini btn-ghost" id="wxAvatarBtn" style="width:auto;margin-left:auto">从相册选择</button></div></div></div>
+      <p class="hint" style="margin:12px 0 14px">同一设备仅可注册一次，注册后不可再开小号；请谨慎填写昵称。</p>
+      <div class="row"><button class="btn btn-ghost" onclick="closeModal()">拒绝</button>
+      <button class="btn btn-wechat" id="wxAllow">允许</button></div>
+    </div></div>`);
+  let avatar = null;
+  $('#wxAvatarBtn').onclick = () => pickImage(d => {
+    avatar = d; $('#wxAvatarTip').textContent = '已选择头像';
+  }, 320);
+  $('#wxAllow').onclick = () => {
+    const name = $('#wxName').value.trim();
+    if (!name) { toast('请填写昵称'); return; }
+    if (state.users.some(u => u.name === name)) { toast('该昵称已被占用，请换一个'); return; }
+    register(name, avatar);
+  };
+}
+function register(name, avatar) {
+  const id = 'u_me_' + Date.now().toString(36);
+  const u = {
+    id, name, sig: '初来清平，愿得清欢。', avatar: avatar || svgAvatar(name),
+    bg: null, music: null, splash: null, chatBg: null, chatMusic: null,
+    role: 'developer', friends: [], createdAt: Date.now(), visitsTotal: 0,
+    wxId: 'wx_' + id, wxName: name
+  };
+  state.users.push(u);
+  state.me = id; state.registered = true; state.regUid = id;
+
+  // 默认进入大群聊
+  const all = state.users.map(x => x.id);
+  state.groups.unshift({
+    id: 'g_main', name: '清平乐·大群聊', isMain: true, members: all,
+    ownerId: id, createdAt: Date.now()
+  });
+  state.groupMsgs['g_main'] = [
+    { id: uid('m'), type: 'sys', text: `「${name}」加入了清平乐大群聊`, time: Date.now() - 60000 },
+    { id: uid('m'), from: 'u_jyz', text: '欢迎新朋友。既入清平，便是一家人。', time: Date.now() - 50000 },
+    { id: uid('m'), from: 'u_hf', text: '来了就好，先去看看今日诗词罢。', time: Date.now() - 40000 }
+  ];
+
+  // 好友申请演示
+  state.reqs.unshift(
+    { id: uid('r'), from: 'u_hf', to: id, time: Date.now() - 1800000, status: 'pending' },
+    { id: uid('r'), from: 'u_dm', to: id, time: Date.now() - 900000, status: 'pending' }
+  );
+
+  // 欢迎公告
+  state.notices.unshift({
+    id: uid('n'), authorId: id, authorName: name, pinned: true, published: true,
+    time: Date.now(), publishAt: null, imgs: [],
+    content: `【清平乐·开帮】\n欢迎「${name}」入驻清平乐•醉清欢。\n此间有准则、有接龙、有投票与统计；有花繁若轩可晒山水，有蝶梦袅袅可读诗词。\n愿君在此，醉一段清欢。`
+  });
+
+  // 昨日榜单补一笔自己的数据
+  const y = ymd(dayShift(-1));
+  state.visits[y] = state.visits[y] || {};
+  state.visits[y][id] = 12;
+
+  saveState();
+  closeModal();
+  enterApp();
+  toast('注册成功，已加入清平乐大群聊');
+}
+
+/* ---------- 导航 ---------- */
+let activeTab = 'tools';
+function switchTab(tab) {
+  activeTab = tab;
+  $$('.page').forEach(p => p.classList.toggle('active', p.id === 'page-' + tab));
+  $$('.tab-item').forEach(n => n.classList.toggle('active', n.dataset.tab === tab));
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  renderAll();
+}
+function enterApp() {
+  $('#authScreen').classList.add('hidden');
+  $('#app').classList.remove('hidden');
+  if (state.groups.length && !state.groups.some(g => g.isMain)) { /* 兼容旧数据 */ }
+  renderAll();
+  settleTick();
+}
+
+/* ---------- 定时结算 ---------- */
+function settleItems() {
+  const now = Date.now();
+  let changed = false;
+  ['signups', 'polls', 'stats'].forEach(k => {
+    state[k].forEach(it => {
+      if (!it.closed && it.expiresAt <= now) {
+        it.closed = true; it.settledAt = now; changed = true;
+      }
+    });
+  });
+  state.notices.forEach(n => {
+    if (!n.published && n.publishAt && n.publishAt <= now) { n.published = true; changed = true; }
+  });
+  if (changed) { saveState(); renderAll(); toast('有帮会事项已满二十四小时，自动结算完成'); }
+}
+function settleTick() { settleItems(); setInterval(settleItems, 20000); }
+
+/* =========================================================
+   渲染
+   ========================================================= */
+let subTab = 'rules';
+
+function renderAll() {
+  if (!state.me) return;
+  renderTools(); renderDaily(); renderMoments(); renderPoem(); renderFriends(); renderDrawer();
+  const pend = state.reqs.filter(r => r.to === state.me && r.status === 'pending').length;
+  $$('.tab-item').forEach(n => {
+    const old = n.querySelector('.nav-dot'); if (old) old.remove();
+    if (n.dataset.tab === 'friends' && pend > 0) {
+      const d = document.createElement('div'); d.className = 'nav-dot'; n.appendChild(d);
+    }
+  });
+  const u = me();
+  $('#topSub').textContent = `${ROLE[u.role]} · ${u.name}`;
+}
+
+/* ---------- 帮会工具 ---------- */
+function renderTools() {
+  const m = me(), can = isAdmin(m);
+  const tabs = [['rules', '清平准则'], ['signup', '接龙'], ['poll', '投票'], ['stat', '统计表']];
+  let html = `<div class="subtabs">${tabs.map(t =>
+    `<div class="subtab ${subTab === t[0] ? 'active' : ''}" onclick="setSub('${t[0]}')">${t[1]}</div>`).join('')}</div>`;
+  if (subTab === 'rules') html += renderRules(can);
+  if (subTab === 'signup') html += renderSignupSection(m, can);
+  if (subTab === 'poll') html += renderPollSection(m, can);
+  if (subTab === 'stat') html += renderStatSection(m, can);
+  $('#page-tools').innerHTML = html;
+}
+function setSub(t) { subTab = t; renderTools(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+
+function renderRules(can) {
+  return `<div class="card">
+    <div class="card-title"><span class="bar"></span>清平准则<span class="tag">帮会共守</span></div>
+    <textarea class="ta" id="rulesTa" rows="15" ${can ? '' : 'readonly'}>${esc(state.rules)}</textarea>
+    ${can ? `<button class="btn btn-primary mt8" id="rulesSave">保存准则</button>`
+      : `<p class="hint mt8">准则由管理员维护，全体成员共守。</p>`}
+  </div>`;
+}
+function saveRules() {
+  if (!isAdmin(me())) return toast('仅管理员可修改准则');
+  state.rules = $('#rulesTa').value;
+  saveState(); toast('清平准则已更新');
+}
+
+function orderItems(arr) {
+  return arr.slice().sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || b.createdAt - a.createdAt);
+}
+
+function renderSignupSection(m, can) {
+  const list = orderItems(state.signups);
+  let html = `<div class="card" style="padding:12px 14px">
+    <div class="card-title" style="margin-bottom:6px"><span class="bar"></span>帮战接龙<span class="tag">每人限接一次 · 不可匿名</span></div>
+    <p class="hint">接龙以本人账号实名参加，一人一接，重复无效；${can ? '发起后自动置顶，满二十四小时自动结算。' : '管理员发布的接龙会置顶显示。'}</p>
+    ${can ? `<button class="btn btn-primary mt8" onclick="createSignup()">发起接龙</button>` : ''}
+  </div>`;
+  if (!list.length) html += `<div class="empty">暂无接龙，等一声招呼。</div>`;
+  list.forEach(it => {
+    const joined = it.entries.find(e => e.uid === m.id);
+    const live = !it.closed;
+    html += `<div class="item">
+      <div class="item-head">
+        ${it.pinned ? `<span class="badge badge-pin">置顶</span>` : ''}
+        <b>${esc(it.title)}</b>
+        <span class="badge ${live ? 'badge-wait' : 'badge-ok'}">${live ? '进行中' : '已结算'}</span>
+      </div>
+      <div class="meta">由 ${esc(it.creatorName || '清平乐')} 发布 · ${live ? leftText(it.expiresAt) : '已于到期时自动结算'}</div>
+      <div class="progress"><i style="width:${Math.min(100, it.entries.length * 12)}%"></i></div>
+      <div class="meta">已接 ${it.entries.length} 人${joined ? ` · 你为第 ${it.entries.indexOf(joined) + 1} 位` : ''}</div>
+      <div class="participants">${it.entries.map((e, i) =>
+        `<span class="person"><img src="${avatarOf(userById(e.uid))}">${i + 1}. ${esc(e.name)}</span>`).join('')}</div>
+      ${live ? (joined
+        ? `<button class="btn btn-ghost mt8" disabled style="opacity:.6">你已接龙 · 每人仅一次</button>`
+        : `<button class="btn btn-primary mt8" onclick="joinSignup('${it.id}')">接过这一棒（实名 ${esc(m.name)}）</button>`)
+        : `<div class="summary" style="margin-top:10px">结算：共 ${it.entries.length} 人接龙 — ${it.entries.map(e => esc(e.name)).join('、') || '无人'}</div>`}
+      ${can ? `<div class="row mt8"><button class="btn btn-mini btn-ghost" onclick="closeItem('signups','${it.id}')">提前结算</button>
+        <button class="btn btn-mini btn-ghost" onclick="pinItem('signups','${it.id}')">${it.pinned ? '取消置顶' : '置顶'}</button>
+        <button class="btn btn-mini btn-danger" onclick="delItem('signups','${it.id}')">删除</button></div>` : ''}
+    </div>`;
+  });
+  return html;
+}
+
+function createSignup() {
+  if (!isAdmin(me())) return toast('仅管理员可发起接龙');
+  askForm({
+    title: '发起接龙', desc: '实名参加，一人一接，二十四小时后自动结算。',
+    fields: [
+      { key: 'title', label: '接龙标题', ph: '例：本周帮战接龙 · 清平乐出战名单' },
+      { key: 'note', label: '说明（可选）', type: 'textarea', ph: '集合时间、分工要求等' }
+    ],
+    ok: '发布并置顶',
+    onSubmit: v => {
+      if (!v.title) { toast('请填写标题'); return false; }
+      const it = {
+        id: uid('s'), title: v.title, note: v.note, creatorId: state.me, creatorName: me().name,
+        pinned: true, createdAt: Date.now(), expiresAt: Date.now() + 86400000, closed: false, entries: []
+      };
+      state.signups.unshift(it); saveState(); renderTools(); toast('接龙已发布并置顶');
+    }
+  });
+}
+function joinSignup(id) {
+  const it = state.signups.find(s => s.id === id); if (!it) return;
+  if (it.closed) return toast('此接龙已结算');
+  const m = me();
+  if (it.entries.some(e => e.uid === m.id)) return toast('每人仅可接一次');
+  it.entries.push({ uid: m.id, name: m.name, time: Date.now(), note: '' });
+  saveState(); renderTools(); toast('接龙成功，你是第 ' + it.entries.length + ' 位');
+}
+
+function renderPollSection(m, can) {
+  const list = orderItems(state.polls);
+  let html = `<div class="card" style="padding:12px 14px">
+    <div class="card-title" style="margin-bottom:6px"><span class="bar"></span>帮会投票<span class="tag">一人一票 · 二十四小时结算</span></div>
+    <p class="hint">投票可匿名，一人一票不可更改；管理员发起后自动置顶，满二十四小时自动结算。</p>
+    ${can ? `<button class="btn btn-primary mt8" onclick="createPoll()">发起投票</button>` : ''}
+  </div>`;
+  if (!list.length) html += `<div class="empty">暂无投票。</div>`;
+  list.forEach(it => {
+    const total = it.options.reduce((s, o) => s + o.votes.length, 0);
+    const myVote = it.options.findIndex(o => o.votes.includes(m.id));
+    const sorted = it.closed ? it.options.slice().sort((a, b) => b.votes.length - a.votes.length) : [];
+    const winner = sorted[0] || null;
+    const tied = sorted.length > 1 && sorted[1].votes.length === winner.votes.length && winner.votes.length > 0;
+    html += `<div class="item">
+      <div class="item-head">
+        ${it.pinned ? `<span class="badge badge-pin">置顶</span>` : ''}
+        <b>${esc(it.title)}</b>
+        <span class="badge ${it.closed ? 'badge-ok' : 'badge-wait'}">${it.closed ? '已结算' : leftText(it.expiresAt)}</span>
+      </div>
+      <div class="meta">由 ${esc(it.creatorName || '清平乐')} 发布 · ${it.anonymous ? '匿名投票' : '实名投票'} · 共 ${total} 票</div>
+      <div class="options">${it.options.map((o, i) => {
+      const pct = total ? Math.round(o.votes.length / total * 100) : 0;
+      return `<div class="opt ${myVote === i ? 'voted' : ''}" ${it.closed || myVote > -1 ? '' : `onclick="votePoll('${it.id}',${i})"`}>
+          <span class="radio"></span>
+          <span class="opt-name">${esc(o.text)}</span>
+          <span class="opt-cnt">${it.closed ? pct + '% · ' + o.votes.length + ' 票' : o.votes.length + ' 票'}</span>
+        </div>`;
+    }).join('')}</div>
+      ${it.closed ? `<div class="summary">结算：${winner ? (tied ? `${esc(winner.text)} 等并列第一（各 ${winner.votes.length} 票）` : `${esc(winner.text)} 胜出（${winner.votes.length} 票）`) : '无有效票'}</div>`
+      : myVote > -1 ? `<div class="meta mt8">你已投给「${esc(it.options[myVote].text)}」，一人一票，不可更改。</div>`
+        : `<div class="meta mt8">点击选项投票，一人一票。</div>`}
+      ${can ? `<div class="row mt8">
+        <button class="btn btn-mini btn-ghost" onclick="closeItem('polls','${it.id}')">提前结算</button>
+        <button class="btn btn-mini btn-ghost" onclick="pinItem('polls','${it.id}')">${it.pinned ? '取消置顶' : '置顶'}</button>
+        <button class="btn btn-mini btn-danger" onclick="delItem('polls','${it.id}')">删除</button></div>` : ''}
+    </div>`;
+  });
+  return html;
+}
+function createPoll() {
+  if (!isAdmin(me())) return toast('仅管理员可发起投票');
+  askForm({
+    title: '发起投票', desc: '每行一个选项，至少两项；一人一票，二十四小时后自动结算。',
+    fields: [
+      { key: 'title', label: '投票主题', ph: '例：下月帮会活动去哪儿？' },
+      { key: 'opts', label: '选项（每行一个）', type: 'textarea', rows: 4, ph: '夜游江南水乡\n山中露营赏星\n线上诗词雅集' },
+      { key: 'anonymous', label: '匿名投票（不显示谁投了哪项）', type: 'checkbox', value: true }
+    ],
+    ok: '发布并置顶',
+    onSubmit: v => {
+      const opts = v.opts.split('\n').map(s => s.trim()).filter(Boolean);
+      if (!v.title) { toast('请填写主题'); return false; }
+      if (opts.length < 2) { toast('至少需要两个选项'); return false; }
+      state.polls.unshift({
+        id: uid('v'), title: v.title, creatorId: state.me, creatorName: me().name, pinned: true,
+        anonymous: !!v.anonymous, createdAt: Date.now(), expiresAt: Date.now() + 86400000, closed: false,
+        options: opts.map(t => ({ text: t, votes: [] }))
+      });
+      saveState(); renderTools(); toast('投票已发布并置顶');
+    }
+  });
+}
+function votePoll(id, idx) {
+  const it = state.polls.find(p => p.id === id); if (!it || it.closed) return;
+  const m = me();
+  if (it.options.some(o => o.votes.includes(m.id))) return toast('一人一票，你已投过');
+  it.options[idx].votes.push(m.id);
+  saveState(); renderTools(); toast('投票成功');
+}
+
+function renderStatSection(m, can) {
+  const list = orderItems(state.stats);
+  let html = `<div class="card" style="padding:12px 14px">
+    <div class="card-title" style="margin-bottom:6px"><span class="bar"></span>统计表<span class="tag">每人每日一次 · 可匿名</span></div>
+    <p class="hint">统计表由管理员发起，每人对同一张表每日仅可提交一次；可否匿名由发起者决定；满二十四小时自动结算汇总。</p>
+    ${can ? `<button class="btn btn-primary mt8" onclick="createStat()">发起统计表</button>` : ''}
+  </div>`;
+  if (!list.length) html += `<div class="empty">暂无统计表。</div>`;
+  list.forEach(it => {
+    const today = ymd();
+    const myToday = it.entries.find(e => e.uid === m.id && ymd(e.time) === today);
+    html += `<div class="item">
+      <div class="item-head">
+        ${it.pinned ? `<span class="badge badge-pin">置顶</span>` : ''}
+        <b>${esc(it.title)}</b>
+        <span class="badge ${it.closed ? 'badge-ok' : 'badge-wait'}">${it.closed ? '已结算' : leftText(it.expiresAt)}</span>
+      </div>
+      <div class="meta">由 ${esc(it.creatorName || '清平乐')} 发布 · ${it.anonymous ? '可匿名' : '实名'} · 已收 ${it.entries.length} 份</div>
+      ${it.desc ? `<p class="hint" style="margin-top:6px">${esc(it.desc)}</p>` : ''}
+      <div class="pill-row">${it.fields.map(f => `<span class="pill">${esc(f.label)}</span>`).join('')}</div>`;
+
+    if (!it.closed) {
+      if (myToday) {
+        html += `<div class="summary" style="margin-top:10px">你今日已提交（每人每日一次），明日再来。</div>`;
+      } else {
+        html += `<div class="mt8">${it.fields.map(f => `<div style="margin-bottom:8px">
+          <div class="hint" style="margin-bottom:4px">${esc(f.label)}</div>
+          <input class="inp" id="st_${it.id}_${f.key}" placeholder="填写${esc(f.label)}"></div>`).join('')}
+          ${it.anonymous ? `<label style="display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--ink-2)">
+            <input type="checkbox" id="anon_${it.id}">匿名提交（不显示我的昵称）</label>` : ''}
+          <button class="btn btn-primary mt8" onclick="submitStat('${it.id}')">提交今日一份</button></div>`;
+      }
+    }
+    if (it.entries.length) {
+      html += `<div class="participants" style="margin-top:10px">${it.entries.slice(0, 12).map(e => {
+        const who = e.anonymous ? '匿名成员' : esc((userById(e.uid) || {}).name || '成员');
+        const vs = it.fields.map(f => esc(e.values[f.key] || '-')).join(' / ');
+        return `<span class="person">${who} · ${vs}</span>`;
+      }).join('')}${it.entries.length > 12 ? `<span class="person">等 ${it.entries.length} 份</span>` : ''}</div>`;
+    }
+    if (it.closed) html += `<div class="summary" style="margin-top:10px">结算：共 ${it.entries.length} 份有效提交，已归档。</div>`;
+    if (can) html += `<div class="row mt8">
+      <button class="btn btn-mini btn-ghost" onclick="closeItem('stats','${it.id}')">提前结算</button>
+      <button class="btn btn-mini btn-ghost" onclick="pinItem('stats','${it.id}')">${it.pinned ? '取消置顶' : '置顶'}</button>
+      <button class="btn btn-mini btn-danger" onclick="delItem('stats','${it.id}')">删除</button></div>`;
+    html += `</div>`;
+  });
+  return html;
+}
+function createStat() {
+  if (!isAdmin(me())) return toast('仅管理员可发起统计表');
+  askForm({
+    title: '发起统计表', desc: '每行一个字段名，最多四项；每人每日限填一次。',
+    fields: [
+      { key: 'title', label: '统计表名称', ph: '例：本周帮贡统计表' },
+      { key: 'desc', label: '说明（可选）', type: 'textarea', ph: '填写要求、口径等' },
+      { key: 'fields', label: '字段（每行一个）', type: 'textarea', rows: 3, ph: '本周帮贡\n在线时长（小时）' },
+      { key: 'anonymous', label: '允许匿名提交', type: 'checkbox', value: true }
+    ],
+    ok: '发布并置顶',
+    onSubmit: v => {
+      const fs = v.fields.split('\n').map(s => s.trim()).filter(Boolean).slice(0, 4);
+      if (!v.title) { toast('请填写名称'); return false; }
+      if (!fs.length) { toast('请至少填写一个字段'); return false; }
+      state.stats.unshift({
+        id: uid('t'), title: v.title, desc: v.desc, creatorId: state.me, creatorName: me().name,
+        pinned: true, anonymous: !!v.anonymous, createdAt: Date.now(), expiresAt: Date.now() + 86400000,
+        closed: false, fields: fs.map(s => ({ key: 'f' + Math.random().toString(36).slice(2, 6), label: s })), entries: []
+      });
+      saveState(); renderTools(); toast('统计表已发布并置顶');
+    }
+  });
+}
+function submitStat(id) {
+  const it = state.stats.find(s => s.id === id); if (!it) return;
+  const m = me();
+  if (it.closed) return toast('此统计表已结算');
+  if (it.entries.some(e => e.uid === m.id && ymd(e.time) === ymd())) return toast('每人每日仅可提交一次');
+  const values = {};
+  for (const f of it.fields) {
+    const v = ($('#st_' + id + '_' + f.key) || {}).value;
+    values[f.key] = (v || '').trim();
+  }
+  if (Object.values(values).every(v => !v)) return toast('请至少填写一项');
+  it.entries.push({
+    uid: m.id, anonymous: !!(it.anonymous && ($('#anon_' + id) || {}).checked),
+    values, time: Date.now()
+  });
+  saveState(); renderTools(); toast('已提交今日统计');
+}
+
+function closeItem(kind, id) {
+  if (!isAdmin(me())) return toast('仅管理员可操作');
+  const it = state[kind].find(x => x.id === id); if (!it) return;
+  it.closed = true; it.settledAt = Date.now();
+  saveState(); renderTools(); toast('已提前结算');
+}
+function pinItem(kind, id) {
+  if (!isAdmin(me())) return toast('仅管理员可操作');
+  const it = state[kind].find(x => x.id === id); if (!it) return;
+  it.pinned = !it.pinned; saveState(); renderTools(); toast(it.pinned ? '已置顶' : '已取消置顶');
+}
+function delItem(kind, id) {
+  if (!isAdmin(me())) return toast('仅管理员可操作');
+  confirmBox('删除确认', '删除后不可恢复，确定删除？', () => {
+    state[kind] = state[kind].filter(x => x.id !== id);
+    saveState(); renderTools(); toast('已删除');
+  }, '删除');
+}
+
+/* ---------- 每日清平 ---------- */
+function renderDaily() {
+  const m = me(), can = isAdmin(m);
+  const y = ymd(dayShift(-1));
+  const feed = state.notices.slice()
+    .filter(n => n.published || (can && n.publishAt))
+    .sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || b.time - a.time);
+
+  let html = `<div class="card" style="padding:12px 14px">
+    <div class="card-title" style="margin-bottom:6px"><span class="bar"></span>今日公告<span class="tag">每日清平</span></div>
+    <p class="hint">${can ? '你为管理员，可在此发布今日公告与图片，亦可定时发布；系统每日自动总结昨日重大事件。'
+      : '公告由六名管理员（含群主、开发者）发布，可指定发布时间。成员可阅，不可发。'}</p>
+    ${can ? `<button class="btn btn-primary mt8" onclick="createNotice()">发布今日公告</button>` : ''}
+  </div>`;
+
+  feed.forEach(n => {
+    const scheduled = !n.published;
+    html += `<div class="notice ${n.pinned ? 'pinned' : ''}">
+      <div class="n-head">
+        <img src="${avatarOf(userById(n.authorId))}" style="width:28px;height:28px;border-radius:50%">
+        <div><div class="n-title">${esc(n.authorName || '清平乐')}</div>
+        <div class="meta">${scheduled ? `<span class="badge badge-wait">定时发布 · ${fmtFull(n.publishAt)}</span>` : fmtFull(n.time)}</div></div>
+        ${n.pinned ? `<span class="badge badge-pin" style="margin-left:auto">置顶</span>` : ''}
+      </div>
+      <div class="n-body">${esc(n.content)}${(n.imgs || []).map(s => `<img src="${s}">`).join('')}</div>
+      ${can ? `<div class="row mt8"><button class="btn btn-mini btn-ghost" onclick="toggleNoticePin('${n.id}')">${n.pinned ? '取消置顶' : '置顶'}</button>
+        <button class="btn btn-mini btn-danger" onclick="delNotice('${n.id}')">删除</button></div>` : ''}
+    </div>`;
+  });
+
+  html += renderBoards(y);
+  $('#page-daily').innerHTML = html;
+}
+
+function renderBoards(y) {
+  const v = state.visits[y] || {}, l = state.likes[y] || {};
+  const vt = Object.keys(v).filter(id => userById(id)).map(id => ({ u: userById(id), n: v[id] })).sort((a, b) => b.n - a.n);
+  const lt = Object.keys(l).filter(id => userById(id)).map(id => ({ u: userById(id), n: l[id] })).sort((a, b) => b.n - a.n);
+  const wv = vt[0], wl = lt[0];
+
+  const rows = (arr, unit) => arr.slice(0, 3).map((x, i) => `<div class="board-row r${i + 1}">
+      <div class="board-rank">${i + 1}</div>
+      <img src="${avatarOf(x.u)}"><div class="board-name">${esc(x.u.name)}</div>
+      <div class="board-val">${x.n} ${unit}</div></div>`).join('') || '<div class="meta">昨日暂无记录</div>';
+
+  let sum = '';
+  if (wv) sum += `· ${esc(wv.u.name)} 荣获昨日人气榜（按昨日个人主页访问量 ${wv.n} 次发布）<br>`;
+  if (wl) sum += `· ${esc(wl.u.name)} 荣获昨日风华榜（按昨日朋友圈点赞量 ${wl.n} 次发布）<br>`;
+  const yPosts = state.posts.filter(p => ymd(new Date(p.time)) === y).length;
+  sum += `· 昨日新增动态 ${yPosts} 条`;
+  const settled = state.signups.filter(s => s.closed && s.settledAt && ymd(new Date(s.settledAt)) === y);
+  settled.forEach(s => { sum += `<br>· 昨日接龙「${esc(s.title)}」结算，共 ${s.entries.length} 人`; });
+
+  return `<div class="card">
+    <div class="card-title"><span class="bar"></span>昨日风云榜<span class="tag">${y} · 自动统计</span></div>
+    <div class="section-label">人气榜 · 按个人主页访问量</div>
+    <div class="boards">${rows(vt, '次')}</div>
+    <div class="section-label" style="margin-top:12px">风华榜 · 按朋友圈点赞量</div>
+    <div class="boards">${rows(lt, '赞')}</div>
+    <div class="summary"><b style="color:var(--jade)">昨日重大事件（自动总结）</b><br>${sum}</div>
+  </div>`;
+}
+
+function createNotice() {
+  if (!isAdmin(me())) return toast('仅管理员可发布公告');
+  let imgs = [];
+  askForm({
+    title: '发布今日公告', desc: '可附图，可设定定时发布时间；公告将进入每日清平。',
+    fields: [
+      { key: 'content', label: '公告内容', type: 'textarea', rows: 5, ph: '今日公告……' },
+      { key: 'at', label: '定时发布（留空为立即发布）', type: 'datetime' },
+      { key: 'pinned', label: '置顶此公告', type: 'checkbox', value: false }
+    ],
+    ok: '发布',
+    onSubmit: v => {
+      if (!v.content) { toast('请填写公告内容'); return false; }
+      const at = v.at ? new Date(v.at).getTime() : null;
+      state.notices.unshift({
+        id: uid('n'), authorId: state.me, authorName: me().name, pinned: !!v.pinned,
+        content: v.content, imgs, time: Date.now(), publishAt: at, published: !at || at <= Date.now()
+      });
+      saveState(); renderDaily(); toast(at ? '已设定时发布' : '公告已发布');
+    }
+  });
+  const modal = $('#modalBox');
+  const rowEl = $('#formOk').parentElement;
+  rowEl.insertAdjacentHTML('beforebegin', `<button class="btn btn-ghost" id="noticeImgBtn" style="margin-bottom:10px">＋ 添加图片</button>
+    <div class="img-pick" id="noticeImgs" style="margin-bottom:12px"></div>`);
+  const drawImgs = () => {
+    $('#noticeImgs').innerHTML = imgs.map((s, i) => `<div class="thumb"><img src="${s}"><span onclick="window.__nImgDel(${i})">×</span></div>`).join('');
+  };
+  window.__nImgDel = i => { imgs.splice(i, 1); drawImgs(); };
+  $('#noticeImgBtn').onclick = () => pickImage(d => { if (imgs.length >= 6) return toast('最多 6 张'); imgs.push(d); drawImgs(); }, 900);
+}
+function toggleNoticePin(id) {
+  const n = state.notices.find(x => x.id === id); if (!n) return;
+  n.pinned = !n.pinned; saveState(); renderDaily();
+}
+function delNotice(id) {
+  if (!isAdmin(me())) return toast('仅管理员可操作');
+  confirmBox('删除公告', '确定删除此公告？', () => {
+    state.notices = state.notices.filter(x => x.id !== id); saveState(); renderDaily(); toast('已删除');
+  }, '删除');
+}
+
+/* ---------- 花繁若轩 ---------- */
+let draftImgs = [];
+function renderMoments() {
+  const m = me(), can = isAdmin(m);
+  let html = `<div class="card">
+    <div class="card-title"><span class="bar"></span>花繁若轩<span class="tag">朋友圈 · 可附图</span></div>
+    <textarea class="ta" id="postTa" rows="3" placeholder="今日山水、心事与清欢……"></textarea>
+    <div class="img-pick" id="postImgs">${draftImgs.map((s, i) =>
+      `<div class="thumb"><img src="${s}"><span onclick="delDraftImg(${i})">×</span></div>`).join('')}</div>
+    <div class="row mt8">
+      <button class="btn btn-ghost" style="width:auto;padding:8px 14px;font-size:12.5px" onclick="addDraftImg()">＋ 图片</button>
+      <span class="hint">最多 9 张</span>
+      <button class="btn btn-primary" style="width:110px;margin-left:auto;padding:9px" onclick="publishPost()">发布</button>
+    </div>
+  </div>`;
+
+  const list = state.posts.slice().sort((a, b) => b.time - a.time);
+  if (!list.length) html += `<div class="empty">轩中尚无花影，等你第一笔。</div>`;
+  list.forEach(p => {
+    const u = userById(p.uid) || { name: '故人', id: p.uid };
+    const liked = p.likes.includes(m.id);
+    const mine = p.uid === m.id;
+    html += `<div class="moment">
+      <div class="moment-top" onclick="openProfile('${p.uid}')">
+        <img src="${avatarOf(u)}">
+        <div><div class="m-name">${esc(u.name)}${isAdmin(u) ? ' <span class="badge badge-role">' + ROLE[u.role] + '</span>' : ''}</div>
+        <div class="m-time">${fmtTime(p.time)}</div></div>
+        ${mine ? `<button class="m-del" onclick="event.stopPropagation();delPost('${p.id}')">⋯</button>` : ''}
+      </div>
+      ${p.content ? `<div class="m-text">${esc(p.content)}</div>` : ''}
+      ${p.imgs && p.imgs.length ? `<div class="m-imgs ${p.imgs.length === 1 ? 'one' : p.imgs.length === 2 ? 'two' : ''}">
+        ${p.imgs.map(s => `<img src="${s}" onclick="viewImage('${p.id}')">`).join('')}</div>` : ''}
+      <div class="m-actions">
+        <button class="m-act ${liked ? 'liked' : ''}" onclick="likePost('${p.id}')">♡ ${p.likes.length}</button>
+        <button class="m-act" onclick="openProfile('${p.uid}')">◎ 主页 · ${((userById(p.uid) || {}).visitsTotal) || 0}</button>
+        ${(mine || can) ? `<button class="m-act" style="margin-left:auto;color:var(--sub)" onclick="delPost('${p.id}')">${can && !mine ? '管理员删除' : '删除'}</button>` : ''}
+      </div>
+    </div>`;
+  });
+  $('#page-moments').innerHTML = html;
+}
+function addDraftImg() {
+  if (draftImgs.length >= 9) return toast('最多 9 张');
+  pickImage(d => { draftImgs.push(d); renderMoments(); }, 1000);
+}
+function delDraftImg(i) { draftImgs.splice(i, 1); renderMoments(); }
+function publishPost() {
+  const m = me();
+  const text = ($('#postTa').value || '').trim();
+  if (!text && !draftImgs.length) return toast('写点什么，或选一张图');
+  state.posts.unshift({ id: uid('p'), uid: m.id, content: text, imgs: draftImgs.slice(), time: Date.now(), likes: [] });
+  draftImgs = [];
+  saveState(); renderMoments(); toast('已发布到花繁若轩');
+}
+function likePost(id) {
+  const p = state.posts.find(x => x.id === id); if (!p) return;
+  const m = me();
+  const i = p.likes.indexOf(m.id);
+  if (i > -1) { p.likes.splice(i, 1); }
+  else {
+    p.likes.push(m.id);
+    const d = ymd(); state.likes[d] = state.likes[d] || {};
+    state.likes[d][p.uid] = (state.likes[d][p.uid] || 0) + 1;
+  }
+  saveState(); renderMoments();
+}
+function delPost(id) {
+  const p = state.posts.find(x => x.id === id); if (!p) return;
+  const m = me();
+  if (p.uid !== m.id && !isAdmin(m)) return toast('仅本人或管理员可删除');
+  confirmBox('删除动态', '删除后其图片一并移除，确定？', () => {
+    state.posts = state.posts.filter(x => x.id !== id);
+    saveState(); renderMoments(); toast('已删除');
+  }, '删除');
+}
+function viewImage(id) {
+  const p = state.posts.find(x => x.id === id); if (!p) return;
+  openModal(`<div style="-webkit-overflow-scrolling:touch">${p.imgs.map(s => `<img src="${s}" style="width:100%;border-radius:10px;margin-bottom:8px">`).join('')}</div>
+    <button class="btn btn-ghost mt8" onclick="closeModal()">收起</button>`);
+  if (u.music) playProfileMusic(u.music);
+}
+
+/* ---------- 蝶梦袅袅：每日诗词 ---------- */
+function poemIndex(offset = 0) {
+  const d = dayShift(offset);
+  const dayNum = Math.floor(d.getTime() / 86400000);
+  return ((dayNum % POEMS.length) + POEMS.length) % POEMS.length;
+}
+function renderPoem() {
+  const idx = poemIndex(0);
+  const p = POEMS[idx];
+  const issue = Math.floor(new Date().setHours(0, 0, 0, 0) / 86400000) % 1000;
+  let html = `<div class="poem-wrap">
+    <div class="poem-tag">每日诗词推送 · 第 ${issue} 期</div>
+    <div class="poem-title">${esc(p.t)}</div>
+    <div class="poem-author">${esc(p.a)}</div>
+    <div class="poem-body">${esc(p.c)}</div>
+    <div class="poem-appr"><b>赏析</b><br>${esc(p.p)}</div>
+    <div class="meta" style="text-align:right;margin-top:12px">每日 05:30 自动推送 · 今日已送达</div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="bar"></span>近七日诗单<span class="tag">蝶梦袅袅</span></div>
+    ${[0, 1, 2, 3, 4, 5, 6].map(o => {
+    const q = POEMS[poemIndex(-o)];
+    const d = dayShift(-o);
+    return `<div class="poem-his"><div class="d">${o === 0 ? '今日' : `${d.getMonth() + 1}/${d.getDate()}`}</div>
+        <div class="t">${esc(q.t)}</div><div class="d" style="width:auto">${esc(q.a.split('·')[0].trim())}</div></div>`;
+  }).join('')}
+  </div>
+  <div class="card" style="padding:12px 14px">
+    <p class="hint">此页只推送诗词与赏析，不设图片上传入口。图文只归于「花繁若轩」。</p>
+  </div>`;
+  $('#page-poem').innerHTML = html;
+}
+
+/* ---------- 好友 ---------- */
+function isFriend(a, b) { const u = userById(a); return !!u && u.friends.includes(b); }
+function addFriends(a, b) {
+  const ua = userById(a), ub = userById(b);
+  if (!ua || !ub) return;
+  if (!ua.friends.includes(b)) ua.friends.push(b);
+  if (!ub.friends.includes(a)) ub.friends.push(a);
+}
+
+function renderFriends() {
+  const m = me();
+  const incoming = state.reqs.filter(r => r.to === m.id && r.status === 'pending');
+  const outgoing = state.reqs.filter(r => r.from === m.id && r.status !== 'pending').slice(0, 6);
+  const sentPending = state.reqs.filter(r => r.from === m.id && r.status === 'pending');
+  const friends = m.friends.map(id => userById(id)).filter(Boolean);
+  const others = state.users.filter(u => u.id !== m.id);
+
+  let html = `<div class="card" style="padding:11px 14px;background:rgba(255,255,255,.7)">
+    <p class="hint">← 在本页向左滑动，可打开「个人设置」（头像、签名、主页背景、音乐、聊天背景与启动画面）。</p>
+  </div>`;
+
+  html += `<div class="card">
+    <div class="card-title"><span class="bar"></span>群聊<span class="tag">大群聊 · ${state.groups.length ? '已入' : '未入'}</span></div>
+    ${state.groups.map(g => `<div class="friend-row" onclick="openGroup('${g.id}')">
+        <div class="avatar" style="display:flex;align-items:center;justify-content:center;background:linear-gradient(150deg,#35695b,#8aa79b);color:#fdf6e6;font-size:15px">群</div>
+        <div class="f-main"><div class="f-name">${esc(g.name)}${g.isMain ? ' <span class="badge badge-role">大群聊</span>' : ''}</div>
+        <div class="f-sub">${g.members.length} 人 · ${(state.groupMsgs[g.id] || []).length} 条消息</div></div>
+        <span class="chev">›</span></div>`).join('')}
+    <button class="btn btn-ghost mt8" onclick="createGroup()">＋ 新建群聊，拉好友入群</button>
+  </div>`;
+
+  if (incoming.length) {
+    html += `<div class="card"><div class="card-title"><span class="bar"></span>好友申请<span class="tag">${incoming.length} 条待处理</span></div>`;
+    incoming.forEach(r => {
+      const u = userById(r.from) || { name: '故人' };
+      html += `<div class="req"><img src="${avatarOf(u)}">
+        <div class="r-main"><div class="r-name">${esc(u.name)}</div><div class="r-sub">${fmtTime(r.time)} 申请加你为好友</div></div>
+        <button class="btn-mini btn-primary" style="width:auto;padding:6px 10px" onclick="decideReq('${r.id}',1)">同意</button>
+        <button class="btn-mini btn-ghost" style="width:auto;padding:6px 10px" onclick="decideReq('${r.id}',0)">拒绝</button></div>`;
+    });
+    html += `</div>`;
+  }
+
+  html += `<div class="card"><div class="card-title"><span class="bar"></span>我的好友<span class="tag">${friends.length} 人</span></div>`;
+  if (!friends.length) html += `<div class="empty">尚无好友，去下方全帮成员里邀一位。</div>`;
+  friends.forEach(u => {
+    html += `<div class="friend-row" onclick="openProfile('${u.id}')">
+      <img src="${avatarOf(u)}">
+      <div class="f-main"><div class="f-name">${esc(u.name)}${isAdmin(u) ? ' <span class="badge badge-role">' + ROLE[u.role] + '</span>' : ''}</div>
+      <div class="f-sub">${esc(u.sig || '')}</div></div>
+      <button class="btn-mini btn-ghost" style="width:auto;padding:6px 10px" onclick="event.stopPropagation();openDM('${u.id}')">私聊</button></div>`;
+  });
+  html += `</div>`;
+
+  if (sentPending.length) {
+    html += `<div class="card"><div class="card-title"><span class="bar"></span>我发出的申请<span class="tag">待对方同意</span></div>`;
+    sentPending.forEach(r => {
+      const u = userById(r.to) || {};
+      html += `<div class="friend-row"><img src="${avatarOf(u)}"><div class="f-main"><div class="f-name">${esc(u.name)}</div>
+        <div class="f-sub">等待对方验证 · ${fmtTime(r.time)}</div></div><span class="badge badge-wait">待验证</span></div>`;
+    });
+    html += `</div>`;
+  }
+
+  html += `<div class="card"><div class="card-title"><span class="bar"></span>全帮成员<span class="tag">${others.length} 人 · 点击头像可私聊或加好友</span></div>`;
+  others.forEach(u => {
+    html += `<div class="friend-row">
+      <img src="${avatarOf(u)}" onclick="openUserSheet('${u.id}')">
+      <div class="f-main" onclick="openProfile('${u.id}')"><div class="f-name">${esc(u.name)}${isAdmin(u) ? ' <span class="badge badge-role">' + ROLE[u.role] + '</span>' : ''}</div>
+      <div class="f-sub">${esc(u.sig || '')}</div></div>
+      <button class="btn-mini btn-ghost" style="width:auto;padding:6px 10px" onclick="openUserSheet('${u.id}')">…</button></div>`;
+  });
+  html += `</div>`;
+  $('#page-friends').innerHTML = html;
+}
+
+function openUserSheet(id) {
+  const u = userById(id); if (!u) return;
+  const friend = isFriend(state.me, id);
+  const req = state.reqs.find(r => r.from === state.me && r.to === id && r.status === 'pending');
+  openSheet(`<div class="sheet-head"><img src="${avatarOf(u)}">
+      <div><b>${esc(u.name)}</b><small>${ROLE[u.role]} · ${esc(u.sig || '')}</small></div></div>
+    <div class="sheet-item" onclick="closeSheet();openDM('${id}')">私聊</div>
+    ${friend ? `<div class="sheet-item" style="color:var(--sub)">已是好友</div>`
+      : req ? `<div class="sheet-item" style="color:var(--sub)">好友申请已发出，待对方同意</div>`
+        : `<div class="sheet-item" onclick="closeSheet();applyFriend('${id}')">申请加为好友</div>`}
+    <div class="sheet-item" onclick="closeSheet();openProfile('${id}')">查看个人主页</div>
+    <div class="sheet-cancel" onclick="closeSheet()">取消</div>`);
+}
+function applyFriend(id) {
+  const u = userById(id); if (!u) return;
+  if (isFriend(state.me, id)) return toast('你们已是好友');
+  if (state.reqs.some(r => r.from === state.me && r.to === id && r.status === 'pending')) return toast('申请已发出，请等待');
+  const r = { id: uid('r'), from: state.me, to: id, time: Date.now(), status: 'pending' };
+  state.reqs.unshift(r);
+  saveState(); renderFriends();
+  toast('已向「' + u.name + '」发出好友申请');
+}
+function decideReq(rid, yes) {
+  const r = state.reqs.find(x => x.id === rid); if (!r) return;
+  if (r.status !== 'pending') return;
+  if (yes) {
+    r.status = 'accepted'; addFriends(r.from, r.to);
+    toast('已与「' + (userById(r.from) || {}).name + '」成为好友');
+  } else { r.status = 'rejected'; toast('已拒绝该申请'); }
+  saveState(); renderAll();
+}
+function processNpcReqs() {
+  let changed = false;
+  const npcIds = state.users.filter(u => u.role === 'member' && u.id !== state.me).map(u => u.id);
+  state.reqs.forEach(r => {
+    if (r.status === 'pending' && npcIds.includes(r.to) && Date.now() - r.time > 6000) {
+      r.status = 'accepted'; addFriends(r.from, r.to); changed = true;
+    }
+  });
+  if (changed) { saveState(); renderAll(); toast('对方已同意你的好友申请'); }
+}
+
+/* ---------- 个人主页 ---------- */
+function openProfile(id) {
+  const u = userById(id); if (!u) return;
+  const m = me();
+  const today = ymd();
+  const key = today + '_' + id + '_' + state.me;
+  if (!state.visitOnce) state.visitOnce = {};
+  if (!state.visitOnce[key]) {
+    state.visitOnce[key] = 1;
+    state.visits[today] = state.visits[today] || {};
+    state.visits[today][id] = (state.visits[today][id] || 0) + 1;
+    u.visitsTotal = (u.visitsTotal || 0) + 1;
+    saveState();
+  }
+  const posts = state.posts.filter(p => p.uid === id);
+  const cover = u.bg || svgArt('c');
+  openModal(`<div style="margin:-18px -18px 0;position:relative">
+      <div class="profile-cover" style="background-image:url('${cover}')"></div>
+      ${u.music ? '<div class="pm-badge">♪ 主页音乐</div>' : ''}
+      <div class="profile-main">
+        <img class="p-avatar" src="${avatarOf(u)}">
+        <div class="p-name">${esc(u.name)} ${isAdmin(u) ? `<span class="badge badge-role">${ROLE[u.role]}</span>` : ''}</div>
+        <div class="p-sig">${esc(u.sig || '此人未留一字。')}</div>
+        <div class="p-stat"><span><b>${u.visitsTotal || 0}</b>主页访问</span><span><b>${posts.length}</b>动态</span><span><b>${(u.friends || []).length}</b>好友</span></div>
+        <div class="p-actions">
+          ${id === state.me ? '' : `<button class="btn btn-primary" onclick="closeModal();openDM('${id}')">私聊</button>`}
+          ${id === state.me ? `<button class="btn btn-primary" onclick="closeModal();openDrawer()">编辑我的资料</button>`
+      : isFriend(state.me, id) ? `<button class="btn btn-ghost" disabled style="opacity:.6">已是好友</button>`
+        : `<button class="btn btn-ghost" onclick="closeModal();applyFriend('${id}')">申请加为好友</button>`}
+        </div>
+      </div></div>
+    <div class="section-label">${id === state.me ? '我的动态' : 'TA 的动态'}</div>
+    ${posts.length ? posts.map(p => `<div style="padding:10px 0;border-bottom:1px solid rgba(120,100,70,.1)">
+        <div class="m-time">${fmtTime(p.time)}</div>
+        <div style="font-size:13px;line-height:1.7;margin-top:4px">${esc(p.content)}</div>
+        ${p.imgs.length ? `<div class="m-imgs ${p.imgs.length === 1 ? 'one' : ''}" style="margin-top:8px">${p.imgs.map(s => `<img src="${s}">`).join('')}</div>` : ''}
+      </div>`).join('') : '<div class="meta" style="padding:8px 0">暂无动态</div>'}
+    <button class="btn btn-ghost mt8" onclick="closeModal()">收起</button>`);
+}
+
+/* ---------- 抽屉：个人设置 ---------- */
+function renderDrawer() {
+  const m = me(); if (!m) return;
+  $('#dhAvatar').src = avatarOf(m);
+  $('#dhName').textContent = m.name + ' · ' + ROLE[m.role];
+  $('#dhSig').textContent = m.sig || '未留一字';
+
+  const line = (lbl, val, act, fn, red) =>
+    `<div class="set-line"><div class="lbl">${lbl}</div><div class="val">${val}</div>
+     <button class="act ${red ? 'red' : ''}" onclick="${fn}">${act}</button></div>`;
+
+  $('#drawerBody').innerHTML = `
+  <div class="set-group">
+    <h4>资料</h4>
+    ${line('头像', m.avatar ? '自定义头像' : '水墨默认', '更换', 'setAvatar()')}
+    ${line('昵称', esc(m.name), '修改', 'editName()')}
+    ${line('签名', esc(m.sig || '未填写'), '修改', 'editSig()')}
+  </div>
+  <div class="set-group">
+    <h4>主页与启动</h4>
+    ${line('主页背景', m.bg ? '已设置' : '默认山水', m.bg ? '更换' : '上传', 'setBg()')}
+    ${line('主页音乐', m.music ? '已设置（本地音频）' : '未设置（本地音频）', m.music ? '更换' : '上传', 'setMusic()')}
+    ${m.music ? `<audio controls src="${m.music}" style="margin-top:8px"></audio>
+      <div class="row mt8"><button class="btn btn-mini btn-ghost" onclick="removeMusic()">移除主页音乐</button></div>` : ''}
+    ${line('启动画面', m.splash ? '已设置' : '默认「清平乐」', m.splash ? '更换' : '上传', 'setSplash()')}
+    <p class="hint" style="margin-top:8px">主页音乐自本地文件上传，好友打开你的主页时会自动播放（系统静音时不打扰）。</p>
+  </div>
+  <div class="set-group">
+    <h4>聊天定制</h4>
+    ${line('聊天背景', m.chatBg ? '已设置' : '默认宣纸', m.chatBg ? '更换' : '上传', 'setChatBg()')}
+    ${line('聊天音乐', m.chatMusic ? '已设置' : '未设置（本地音频）', m.chatMusic ? '更换' : '上传', 'setChatMusic()')}
+    ${m.chatMusic ? `<audio controls src="${m.chatMusic}" style="margin-top:8px"></audio>` : ''}
+    <p class="hint" style="margin-top:8px">聊天背景与音乐仅在本机生效，进入任一聊天即刻应用。</p>
+  </div>
+  <div class="set-group">
+    <h4>帮会</h4>
+    <div class="set-line" onclick="closeDrawer();openProfile('${m.id}')"><div class="lbl">我的主页</div><div class="val">累计 ${m.visitsTotal || 0} 次访问</div><span class="chev">›</span></div>
+    <div class="set-line" onclick="closeDrawer();openGroup('g_main')"><div class="lbl">大群聊</div><div class="val">${esc((state.groups.find(g => g.isMain) || {}).name || '')}</div><span class="chev">›</span></div>
+    ${isAdmin(m) ? `<div class="set-line" onclick="closeDrawer();openAdmin()"><div class="lbl">管理面板</div><div class="val">${adminList().length}/${ADMIN_CAP} 位管理员</div><span class="chev">›</span></div>` : ''}
+    <div class="set-line"><div class="lbl">清平准则</div><div class="val">于「帮会工具」中查看</div><button class="act" onclick="closeDrawer();setSub('rules');switchTab('tools')">去看</button></div>
+  </div>
+  <div class="set-group">
+    <h4>账号</h4>
+    <div class="set-line"><div class="lbl">微信</div><div class="val">${esc(m.wxName || m.name)}</div></div>
+    <div class="set-line"><div class="lbl">账号</div><div class="val">本设备唯一账号，不发小号</div></div>
+    <button class="btn btn-ghost mt12" onclick="logout()" style="color:var(--cinnabar)">退出登录</button>
+  </div>
+  <p class="hint" style="text-align:center;margin-top:8px">清平乐•醉清欢 · 本地数据版</p>`;
+}
+function openDrawer() {
+  renderDrawer();
+  $('#drawer').classList.add('open');
+  $('#drawerMask').classList.add('open');
+}
+function closeDrawer() {
+  $('#drawer').classList.remove('open');
+  $('#drawerMask').classList.remove('open');
+}
+function logout() {
+  confirmBox('退出登录', '退出后可用微信重新登录，但本设备不可再注册新账号。', () => {
+    state.me = null; saveState();
+    closeDrawer();
+    $('#app').classList.add('hidden');
+    showAuth();
+    toast('已退出登录');
+  }, '退出');
+}
+
+function setAvatar() {
+  pickImage(d => { me().avatar = d; saveState(); renderAll(); toast('头像已更换'); }, 320);
+}
+function setBg() {
+  pickImage(d => { me().bg = d; saveState(); renderAll(); toast('主页背景已更换'); }, 1200);
+}
+let profileAudio = null;
+function playProfileMusic(src) {
+  stopProfileMusic();
+  if (!src) return;
+  try {
+    profileAudio = new Audio(src);
+    profileAudio.loop = true;
+    profileAudio.volume = 0.6;
+    profileAudio.play().catch(() => { });
+  } catch (e) { }
+}
+function stopProfileMusic() { if (profileAudio) { profileAudio.pause(); profileAudio = null; } }
+function setMusic() {
+  pickAudio((d, n) => { me().music = d; saveState(); renderAll(); toast('已设主页音乐：' + n); });
+}
+function removeMusic() {
+  me().music = null; saveState(); renderAll(); toast('主页音乐已移除');
+}
+function setSplash() {
+  pickImage(d => { me().splash = d; saveState(); renderAll(); toast('启动画面已更换，下次进入生效'); }, 1200);
+}
+function setChatBg() {
+  pickImage(d => { me().chatBg = d; saveState(); renderAll(); if (chatCtx) applyChatStyle(); toast('聊天背景已更换'); }, 1200);
+}
+function setChatMusic() {
+  pickAudio((d, n) => { me().chatMusic = d; saveState(); renderAll(); toast('已设聊天音乐：' + n); });
+}
+function editName() {
+  askForm({
+    title: '修改昵称', fields: [{ key: 'name', label: '新昵称', value: me().name }],
+    onSubmit: v => {
+      if (!v.name) { toast('昵称不可为空'); return false; }
+      if (state.users.some(u => u.name === v.name && u.id !== state.me)) { toast('昵称已被占用'); return false; }
+      const old = me().name;
+      me().name = v.name;
+      state.notices.forEach(n => { if (n.authorId === state.me) n.authorName = v.name; });
+      state.signups.forEach(s => { if (s.creatorId === state.me) s.creatorName = v.name; });
+      state.polls.forEach(s => { if (s.creatorId === state.me) s.creatorName = v.name; });
+      state.stats.forEach(s => { if (s.creatorId === state.me) s.creatorName = v.name; });
+      state.signups.forEach(s => s.entries.forEach(e => { if (e.uid === state.me) e.name = v.name; }));
+      saveState(); renderAll(); toast('昵称已改为「' + v.name + '」');
+    }
+  });
+}
+function editSig() {
+  askForm({
+    title: '修改签名', fields: [{ key: 'sig', label: '个性签名', type: 'textarea', value: me().sig, rows: 2 }],
+    onSubmit: v => { me().sig = v.sig; saveState(); renderAll(); toast('签名已更新'); }
+  });
+}
+
+/* ---------- 管理员 ---------- */
+function adminCount() { return adminList().length; }
+function openAdmin() {
+  const m = me();
+  if (!isAdmin(m)) return toast('仅管理员可进入');
+  const admins = adminList();
+  const isDev = m.role === 'developer';
+  const isOwner = m.role === 'owner';
+  const slots = Array.from({ length: ADMIN_CAP }, (_, i) => admins[i] || null);
+
+  openModal(`<h3>管理面板</h3>
+    <p style="text-align:center;margin-bottom:12px">六名管理员（含开发者、群主）· 已设 ${admins.length}/6</p>
+    <div class="admin-grid">${slots.map((u, i) => u
+    ? `<div class="adm"><img src="${avatarOf(u)}"><div><div class="a-name">${esc(u.name)}</div><div class="a-role">${ROLE[u.role]}</div></div></div>`
+    : `<div class="adm" style="opacity:.55;border-style:dashed"><div class="avatar" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.04);border-radius:8px;font-size:12px;color:var(--sub)">空</div><div><div class="a-name">第 ${i + 1} 席</div><div class="a-role">未设</div></div></div>`).join('')}</div>
+    <div class="section-label" style="margin-top:14px">权限</div>
+    <p class="hint" style="line-height:2">· 可删其余成员动态与图片<br>· 可发布接龙、投票、统计表，并自动置顶<br>· 可于每日清平发布今日公告、图片，支持定时发布<br>· 系统每日自动总结昨日重大事件</p>
+    <div class="section-label" style="margin-top:14px">人事</div>
+    ${isDev ? `<button class="btn btn-primary mb8" onclick="appoint('owner')">任命群主（开发者权限）</button>` : ''}
+    ${(isDev || isOwner) ? `<button class="btn btn-primary mb8" onclick="appoint('admin')">任命管理员</button>` : ''}
+    ${admins.filter(u => u.role === 'admin' || (isDev && u.role === 'owner')).length && (isDev || isOwner)
+      ? `<div class="pill-row">${admins.filter(u => (u.role === 'admin' && (isDev || isOwner)) || (u.role === 'owner' && isDev))
+        .map(u => `<button class="pill" onclick="dismissAdmin('${u.id}')">${esc(u.name)} · 卸任</button>`).join('')}</div>` : ''}
+    ${!isDev && !isOwner ? `<p class="hint">群主与管理员由开发者、群主任命。</p>` : ''}
+    <div class="section-label" style="margin-top:14px">内容治理</div>
+    <div class="pill-row">${state.posts.slice(0, 8).map(p => {
+    const u = userById(p.uid) || {};
+    return `<button class="pill" onclick="delPost('${p.id}')">删：${esc(u.name || '')} · ${esc((p.content || '图片').slice(0, 8))}</button>`;
+  }).join('') || '<span class="hint">暂无动态</span>'}</div>
+    <div class="row mt12"><button class="btn btn-ghost" onclick="closeModal()">收起</button></div>`);
+}
+function appoint(role) {
+  const m = me();
+  if (role === 'owner' && m.role !== 'developer') return toast('仅开发者可任命群主');
+  if (role === 'admin' && !(m.role === 'developer' || m.role === 'owner')) return toast('仅开发者或群主可任命管理员');
+  const choices = state.users.filter(u => u.id !== state.me && u.role !== 'developer' && u.role !== 'owner')
+    .map(u => ({ v: u.id, t: u.name + (u.role === 'admin' ? '（管理员）' : '') }));
+  if (!choices.length) return toast('暂无可任命成员');
+  askForm({
+    title: role === 'owner' ? '任命群主' : '任命管理员',
+    desc: '总管理员不得超过六名（含开发者）。',
+    fields: [{ key: 'id', label: '选择成员', type: 'select', choices }],
+    onSubmit: v => {
+      const u = userById(v.id); if (!u) return false;
+      if (role === 'owner') {
+        if (u.role !== 'admin' && adminCount() >= ADMIN_CAP) { toast('管理员已满六名，需先卸任一位'); return false; }
+        const old = state.users.find(x => x.role === 'owner');
+        if (old) old.role = 'member';
+        u.role = 'owner';
+        saveState(); renderAll(); setTimeout(() => { closeModal(); openAdmin(); }, 0);
+        toast('已任命「' + u.name + '」为群主，其可自行任命管理员');
+        return;
+      }
+      if (u.role !== 'admin' && adminCount() >= ADMIN_CAP) { toast('管理员已满六名'); return false; }
+      u.role = 'admin';
+      saveState(); renderAll(); setTimeout(() => { closeModal(); openAdmin(); }, 0);
+      toast('已任命「' + u.name + '」为管理员');
+    }
+  });
+}
+function dismissAdmin(id) {
+  const u = userById(id); if (!u) return;
+  if (u.role === 'developer') return toast('开发者不可卸任');
+  const m = me();
+  if (u.role === 'owner' && m.role !== 'developer') return toast('仅开发者可卸任群主');
+  if (u.role === 'admin' && !(m.role === 'developer' || m.role === 'owner')) return toast('无权限');
+  confirmBox('卸任确认', '确定让「' + u.name + '」卸任？', () => {
+    u.role = 'member'; saveState(); renderAll(); closeModal(); openAdmin(); toast('已卸任');
+  }, '卸任');
+}
+
+/* ---------- 聊天 ---------- */
+let chatCtx = null;
+let chatAudio = null;
+
+function dmKey(a, b) { return [a, b].sort().join('|'); }
+function openDM(id) {
+  const u = userById(id); if (!u) return;
+  chatCtx = { type: 'dm', id };
+  $('#chatName').textContent = u.name;
+  $('#chatSub').textContent = (u.role !== 'member' ? ROLE[u.role] + ' · ' : '') + (u.sig || '');
+  $('#chatView').classList.add('show');
+  applyChatStyle(); renderChat();
+}
+function openGroup(gid) {
+  const g = state.groups.find(x => x.id === gid); if (!g) return;
+  chatCtx = { type: 'group', id: gid };
+  $('#chatName').textContent = g.name;
+  $('#chatSub').textContent = g.members.length + ' 人 · 群聊';
+  $('#chatView').classList.add('show');
+  applyChatStyle(); renderChat();
+}
+function closeChat() {
+  $('#chatView').classList.remove('show');
+  chatCtx = null;
+  stopChatMusic();
+}
+function applyChatStyle() {
+  const u = me();
+  const body = $('#chatBody');
+  body.style.background = 'linear-gradient(180deg,#f6efe2,#efe5d3)';
+  body.style.backgroundImage = u.chatBg ? `url("${u.chatBg}")` : 'none';
+  stopChatMusic();
+  if (u.chatMusic) {
+    chatAudio = new Audio(u.chatMusic);
+    chatAudio.loop = true;
+    chatAudio.play().catch(() => { });
+  }
+}
+function stopChatMusic() { if (chatAudio) { chatAudio.pause(); chatAudio = null; } }
+
+function chatMessages() {
+  if (!chatCtx) return [];
+  if (chatCtx.type === 'dm') {
+    const k = dmKey(state.me, chatCtx.id);
+    if (!state.dm[k]) state.dm[k] = [];
+    if (!state.dm[k].length) {
+      state.dm[k].push({ id: uid('m'), type: 'sys', text: '你们已是好友，说句话吧', time: Date.now() });
+      saveState();
+    }
+    return state.dm[k];
+  }
+  if (!state.groupMsgs[chatCtx.id]) state.groupMsgs[chatCtx.id] = [];
+  if (!state.groupMsgs[chatCtx.id].length) {
+    state.groupMsgs[chatCtx.id].push({ id: uid('m'), type: 'sys', text: '群聊已建立，先说句话吧', time: Date.now() });
+    saveState();
+  }
+  return state.groupMsgs[chatCtx.id];
+}
+function renderChat() {
+  if (!chatCtx) return;
+  const list = chatMessages();
+  const box = $('#chatBody');
+  const isGroup = chatCtx.type === 'group';
+  let html = '';
+  if (!list.length) html = `<div class="empty" style="color:rgba(0,0,0,.35)">尚无言语，先递一句。</div>`;
+  list.forEach(msg => {
+    if (msg.type === 'sys') { html += `<div class="msg sys"><div class="bubble">${esc(msg.text)}</div></div>`; return; }
+    const mine = msg.from === state.me;
+    const u = userById(msg.from) || { name: '故人' };
+    const who = (!mine && isGroup) ? `<div class="who">${esc(u.name)}</div>` : '';
+    const body = msg.kind === 'img'
+      ? `<img src="${msg.text}" style="max-width:180px;border-radius:10px;display:block">`
+      : esc(msg.text);
+    html += `<div class="msg ${mine ? 'me' : ''}">
+      <img src="${avatarOf(u)}">
+      <div>${who}<div class="bubble">${body}</div><div class="btime">${fmtTime(msg.time)}</div></div></div>`;
+  });
+  box.innerHTML = html;
+  box.scrollTop = box.scrollHeight;
+}
+function sendChatMsg(kind, text) {
+  if (!chatCtx) return;
+  const list = chatMessages();
+  const msg = { id: uid('m'), from: state.me, text, kind: kind || 'text', time: Date.now() };
+  list.push(msg);
+  saveState(); renderChat();
+  const inp = $('#chatInput'); if (inp) inp.value = '';
+}
+function chatMore() {
+  if (!chatCtx) return;
+  if (chatCtx.type === 'dm') {
+    const id = chatCtx.id, u = userById(id) || {};
+    openSheet(`<div class="sheet-head"><img src="${avatarOf(u)}"><div><b>${esc(u.name)}</b><small>${esc(u.sig || '')}</small></div></div>
+      <div class="sheet-item" onclick="closeSheet();openProfile('${id}')">查看个人主页</div>
+      ${isFriend(state.me, id) ? '' : `<div class="sheet-item" onclick="closeSheet();applyFriend('${id}')">申请加为好友</div>`}
+      <div class="sheet-cancel" onclick="closeSheet()">取消</div>`);
+    return;
+  }
+  const g = state.groups.find(x => x.id === chatCtx.id); if (!g) return;
+  openSheet(`<div class="sheet-head"><div class="avatar" style="display:flex;align-items:center;justify-content:center;background:linear-gradient(150deg,#35695b,#8aa79b);color:#fdf6e6">群</div>
+      <div><b>${esc(g.name)}</b><small>${g.members.length} 人</small></div></div>
+    <div class="sheet-item" onclick="closeSheet();renameGroup('${g.id}')">修改群名称</div>
+    <div class="sheet-item" onclick="closeSheet();inviteGroup('${g.id}')">拉好友入群</div>
+    <div class="sheet-item" onclick="closeSheet();viewMembers('${g.id}')">查看成员名单</div>
+    ${g.isMain ? '' : `<div class="sheet-item danger" onclick="closeSheet();leaveGroup('${g.id}')">退出群聊</div>`}
+    <div class="sheet-cancel" onclick="closeSheet()">取消</div>`);
+}
+function renameGroup(gid) {
+  const g = state.groups.find(x => x.id === gid); if (!g) return;
+  askForm({
+    title: '修改群名称', fields: [{ key: 'name', label: '群名称', value: g.name }],
+    onSubmit: v => {
+      if (!v.name) { toast('群名不可为空'); return false; }
+      g.name = v.name; saveState(); renderFriends();
+      if (chatCtx && chatCtx.type === 'group' && chatCtx.id === gid) $('#chatName').textContent = v.name;
+      toast('群名称已改为「' + v.name + '」');
+    }
+  });
+}
+function inviteGroup(gid) {
+  const g = state.groups.find(x => x.id === gid); if (!g) return;
+  const cand = me().friends.map(id => userById(id)).filter(u => u && !g.members.includes(u.id));
+  if (!cand.length) return toast('暂无可拉入的好友（先加好友，或对方已在群中）');
+  openModal(`<h3>拉好友入群</h3><p style="text-align:center;margin-bottom:12px">选择要拉入「${esc(g.name)}」的好友</p>
+    ${cand.map(u => `<label style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(120,100,70,.1)">
+      <input type="checkbox" value="${u.id}" class="inviteChk"><img src="${avatarOf(u)}" style="width:32px;height:32px;border-radius:8px">
+      <span style="font-size:13px">${esc(u.name)}</span></label>`).join('')}
+    <div class="row mt12"><button class="btn btn-ghost" onclick="closeModal()">取消</button>
+    <button class="btn btn-primary" id="invOk">拉入群聊</button></div>`);
+  $('#invOk').onclick = () => {
+    const ids = $$('.inviteChk').filter(c => c.checked).map(c => c.value);
+    if (!ids.length) return toast('请先选择好友');
+    ids.forEach(id => {
+      if (!g.members.includes(id)) g.members.push(id);
+      state.groupMsgs[gid] = state.groupMsgs[gid] || [];
+      state.groupMsgs[gid].push({ id: uid('m'), type: 'sys', text: (userById(id) || {}).name + ' 被拉入了群聊', time: Date.now() });
+    });
+    saveState(); closeModal(); renderFriends();
+    if (chatCtx && chatCtx.type === 'group' && chatCtx.id === gid) { $('#chatSub').textContent = g.members.length + ' 人 · 群聊'; renderChat(); }
+    toast('已拉入 ' + ids.length + ' 位好友');
+  };
+}
+function viewMembers(gid) {
+  const g = state.groups.find(x => x.id === gid); if (!g) return;
+  openModal(`<h3>${esc(g.name)} · 成员</h3>
+    ${g.members.map(id => {
+    const u = userById(id) || {}; return `<div class="friend-row"><img src="${avatarOf(u)}">
+        <div class="f-main"><div class="f-name">${esc(u.name || '')}${isAdmin(u) ? ' <span class="badge badge-role">' + ROLE[u.role] + '</span>' : ''}</div>
+        <div class="f-sub">${esc(u.sig || '')}</div></div></div>`;
+  }).join('')}
+    <button class="btn btn-ghost mt8" onclick="closeModal()">收起</button>`);
+}
+function createGroup() {
+  askForm({
+    title: '新建群聊', desc: '建群后可在群里继续拉好友入群。',
+    fields: [{ key: 'name', label: '群名称', ph: '例：清平乐·夜话小群' }],
+    ok: '创建',
+    onSubmit: v => {
+      if (!v.name) { toast('请填群名'); return false; }
+      const g = { id: uid('g'), name: v.name, isMain: false, members: [state.me], ownerId: state.me, createdAt: Date.now() };
+      state.groups.push(g); state.groupMsgs[g.id] = [];
+      saveState(); renderFriends(); toast('群聊已创建，去拉好友进来吧');
+    }
+  });
+}
+function leaveGroup(gid) {
+  const g = state.groups.find(x => x.id === gid); if (!g || g.isMain) return;
+  confirmBox('退出群聊', '确定退出「' + g.name + '」？', () => {
+    g.members = g.members.filter(id => id !== state.me);
+    saveState(); closeChat(); renderAll(); toast('已退出群聊');
+  }, '退出');
+}
+function openMsgList() {
+  const groups = state.groups;
+  const friends = me().friends.map(id => userById(id)).filter(Boolean);
+  const last = (k) => {
+    const arr = state.dm[k] || []; return arr.length ? arr[arr.length - 1] : null;
+  };
+  openSheet(`<div class="sheet-head" style="justify-content:center"><b>消息</b></div>
+    ${groups.map(g => `<div class="sheet-item" style="text-align:left;display:flex;align-items:center;gap:10px" onclick="closeSheet();openGroup('${g.id}')">
+      <span style="font-size:16px">群</span><div style="flex:1"><b style="font-size:13.5px">${esc(g.name)}</b>
+      <div class="meta">${g.members.length} 人</div></div><span class="chev">›</span></div>`).join('')}
+    ${friends.map(u => {
+    const m = last(dmKey(state.me, u.id));
+    return `<div class="sheet-item" style="text-align:left;display:flex;align-items:center;gap:10px" onclick="closeSheet();openDM('${u.id}')">
+      <img src="${avatarOf(u)}" style="width:30px;height:30px;border-radius:8px">
+      <div style="flex:1"><b style="font-size:13.5px">${esc(u.name)}</b>
+      <div class="meta">${m ? esc((m.kind === 'img' ? '[图片]' : m.text).slice(0, 14)) : '尚无消息'}</div></div>
+      <span class="chev">›</span></div>`;
+  }).join('')}
+    <div class="sheet-cancel" onclick="closeSheet()">收起</div>`);
+}
+
+/* ---------- 事件绑定 ---------- */
+let wired = false, tickStarted = false;
+function wire() {
+  if (wired) return; wired = true;
+  $('#btnWechat').onclick = wechatFlow;
+  $('#btnDrawer').onclick = openDrawer;
+  $('#btnMsg').onclick = openMsgList;
+  $('#drawerMask').onclick = closeDrawer;
+  $('#modalMask').onclick = e => { if (e.target.id === 'modalMask') closeModal(); };
+  $('#sheetMask').onclick = e => { if (e.target.id === 'sheetMask') closeSheet(); };
+  $$('.tab-item').forEach(n => n.onclick = () => switchTab(n.dataset.tab));
+  $('#chatBack').onclick = closeChat;
+  $('#chatMore').onclick = chatMore;
+  $('#chatSend').onclick = () => {
+    const v = $('#chatInput').value.trim(); if (!v) return;
+    sendChatMsg('text', v);
+  };
+  $('#chatInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); $('#chatSend').click(); }
+  });
+  $('#chatImg').onclick = () => {
+    if (!chatCtx) return;
+    pickImage(d => sendChatMsg('img', d), 500);
+  };
+  document.addEventListener('click', e => {
+    if (e.target.id === 'rulesSave') saveRules();
+  });
+  // 好友页左滑 / 右滑 打开个人设置
+  const friendsPage = $('#page-friends');
+  let sx = 0, sy = 0, tracking = false;
+  friendsPage.addEventListener('touchstart', e => {
+    if (!e.touches.length) return;
+    sx = e.touches[0].clientX; sy = e.touches[0].clientY; tracking = true;
+  }, { passive: true });
+  friendsPage.addEventListener('touchend', e => {
+    if (!tracking) return;
+    tracking = false;
+    const t = e.changedTouches[0];
+    const dx = t.clientX - sx, dy = t.clientY - sy;
+    if (Math.abs(dx) > 55 && Math.abs(dx) > Math.abs(dy) * 1.4) openDrawer();
+  }, { passive: true });
+}
+
+function init() {
+  boot();
+  wire();
+  showSplash();
+  if (state.me && me()) {
+    // 已登录：等待启动画面结束后进入
+  }
+  if (!tickStarted) {
+    tickStarted = true;
+    setInterval(() => { if (state.me) { settleItems(); processNpcReqs(); } }, 5000);
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && state.me) { settleItems(); }
+  });
+  window.closeModal = closeModal; window.closeSheet = closeSheet;
+  window.closeDrawer = closeDrawer; window.openDrawer = openDrawer;
+  window.openAdmin = openAdmin; window.openProfile = openProfile;
+  window.openDM = openDM; window.openGroup = openGroup; window.delPost = delPost;
+  window.likePost = likePost; window.applyFriend = applyFriend; window.decideReq = decideReq;
+  window.openUserSheet = openUserSheet; window.delDraftImg = delDraftImg;
+  window.publishPost = publishPost; window.addDraftImg = addDraftImg;
+  window.viewImage = viewImage; window.setSub = setSub;
+  window.createSignup = createSignup; window.joinSignup = joinSignup;
+  window.createPoll = createPoll; window.votePoll = votePoll;
+  window.createStat = createStat; window.submitStat = submitStat;
+  window.closeItem = closeItem; window.pinItem = pinItem; window.delItem = delItem;
+  window.createNotice = createNotice; window.toggleNoticePin = toggleNoticePin;
+  window.delNotice = delNotice; window.appoint = appoint; window.dismissAdmin = dismissAdmin;
+  window.renameGroup = renameGroup; window.inviteGroup = inviteGroup;
+  window.viewMembers = viewMembers; window.createGroup = createGroup;
+  window.leaveGroup = leaveGroup; window.openMsgList = openMsgList;
+  window.setAvatar = setAvatar; window.editName = editName; window.editSig = editSig;
+  window.setBg = setBg; window.setSplash = setSplash; window.setChatBg = setChatBg;
+  window.setChatMusic = setChatMusic; window.logout = logout;
+  window.switchTab = switchTab;
+}
+init();
 </script>
 </body>
-                </html><script src="./chat.js"></script>
-
+</html>
