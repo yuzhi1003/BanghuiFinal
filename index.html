@@ -1,6 +1,59 @@
 <!DOCTYPE html>
 <html>
-<head>
+<head>// 当前登录人
+let me = JSON.parse(localStorage.getItem("user"));
+// 当前正在聊天对象
+let chatTargetUid = null;
+let chatTimer = null;
+
+// 开启轮询
+function startPollChat() {
+  stopPollChat();
+  chatTimer = setInterval(async () => {
+    if (!chatTargetUid || !me) return;
+    await loadChatRecord();
+  }, 1500);
+}
+
+// 停止轮询
+function stopPollChat() {
+  if (chatTimer) clearInterval(chatTimer);
+}
+
+// 获取对话记录
+async function loadChatRecord() {
+  const res = await fetch(`/api/getChat?uid1=${me.id}&uid2=${chatTargetUid}`);
+  const data = await res.json();
+  renderChat(data);
+}
+
+// 发送消息
+async function sendChat(text) {
+  if (!chatTargetUid || !text.trim()) return;
+  await fetch("/api/sendMessage", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      from_uid: me.id,
+      to_uid: chatTargetUid,
+      content: text
+    })
+  });
+  await loadChatRecord();
+}
+
+// 切换聊天对象（点别人头像就调用这个）
+function openChat(targetUid) {
+  chatTargetUid = targetUid;
+  startPollChat();
+  loadChatRecord();
+}
+
+// 渲染消息到页面（你后面按古风样式自己美化）
+function renderChat(list) {
+  // 清空聊天框，循环输出消息
+}
+
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>清平乐•醉清欢</title>
@@ -326,4 +379,5 @@
     };
 </script>
 </body>
-                </html>
+                </html><script src="./chat.js"></script>
+
