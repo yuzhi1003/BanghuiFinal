@@ -6,139 +6,324 @@
     <title>清平乐•醉清欢</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: sans-serif; background: #f0f2f5; color: #333; padding-bottom: 60px; }
-        .header { background: #2b7a78; color: white; padding: 15px; text-align: center; font-size: 18px; font-weight: bold; position: sticky; top: 0; z-index: 10; }
-        .content { padding: 15px; }
+        body { font-family: sans-serif; background: #f0f2f5; color: #333; padding-bottom: 60px; overflow-x: hidden; }
+        .header { background: #2b7a78; color: white; padding: 15px; text-align: center; font-size: 18px; font-weight: bold; position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; }
+        .header .avatar-btn { width: 30px; height: 30px; border-radius: 50%; background: #fff; color: #2b7a78; line-height: 30px; text-align: center; font-size: 14px; cursor: pointer; }
+        
+        /* 登录遮罩层 */
+        #login-mask { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 999; display: flex; justify-content: center; align-items: center; flex-direction: column; color: white; }
+        #login-mask button { margin-top: 20px; background: #07c160; color: white; padding: 10px 30px; border: none; border-radius: 5px; font-size: 16px; }
+
+        .content { padding: 15px; transition: transform 0.3s; }
         .tab { display: none; }
         .tab.active { display: block; }
         .card { background: white; padding: 15px; border-radius: 10px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         h3 { margin-bottom: 10px; color: #2b7a78; font-size: 16px; border-left: 3px solid #2b7a78; padding-left: 8px; }
+        
         textarea, input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 10px; font-size: 14px; outline: none; }
-        textarea:focus, input[type="text"]:focus { border-color: #2b7a78; }
-        button { background: #2b7a78; color: white; border: none; padding: 10px 15px; border-radius: 6px; font-size: 14px; width: 100%; font-weight: bold; }
-        button:active { background: #17252a; }
-        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
-        .list-item:last-child { border-bottom: none; }
-        .list-item span { font-size: 14px; }
-        .del-btn { background: #e74c3c; padding: 5px 10px; font-size: 12px; width: auto; border-radius: 4px; }
-        .nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 60px; background: white; display: flex; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
-        .nav-item { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 12px; color: #888; }
+        button { background: #2b7a78; color: white; border: none; padding: 10px 15px; border-radius: 6px; font-size: 14px; width: 100%; font-weight: bold; margin-bottom: 5px; }
+        
+        .nav { position: fixed; bottom: 0; left: 0; width: 100%; height: 60px; background: white; display: flex; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 10; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; font-size: 12px; color: #888; cursor: pointer; }
         .nav-item.active { color: #2b7a78; font-weight: bold; }
-        .img-list { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 15px; }
-        .img-box { position: relative; width: 100%; border-radius: 6px; overflow: hidden; }
-        .img-box img { width: 100%; display: block; }
-        .img-box .del-btn { position: absolute; top: 5px; right: 5px; }
+
+        /* 左滑个人中心侧边栏 */
+        .sidebar { position: fixed; top: 0; left: -80%; width: 80%; height: 100%; background: #fff; z-index: 100; transition: left 0.3s; box-shadow: 2px 0 10px rgba(0,0,0,0.1); padding: 20px; overflow-y: auto; }
+        .sidebar.open { left: 0; }
+        .sidebar-bg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 99; display: none; }
+        .sidebar-bg.open { display: block; }
+        
+        /* 帮会工具子菜单 */
+        .sub-tabs { display: flex; margin-bottom: 15px; border-bottom: 1px solid #eee; }
+        .sub-tab { flex: 1; text-align: center; padding: 10px; font-size: 14px; color: #666; cursor: pointer; }
+        .sub-tab.active { color: #2b7a78; font-weight: bold; border-bottom: 2px solid #2b7a78; }
+        .sub-content { display: none; }
+        .sub-content.active { display: block; }
+
+        .img-preview { width: 100%; border-radius: 6px; margin-top: 8px; }
     </style>
 </head>
 <body>
-<div class="header">清平乐•醉清欢</div>
+
+<!-- 模拟登录 -->
+<div id="login-mask">
+    <h2>欢迎来到清平乐</h2>
+    <p style="margin-top:10px; font-size:12px; color:#aaa;">(演示版本，无需真实账号)</p>
+    <button onclick="doLogin()">模拟微信一键登录</button>
+</div>
+
+<!-- 侧边栏 (个人中心 & 好友) -->
+<div class="sidebar-bg" id="sidebarBg" onclick="toggleSidebar()"></div>
+<div class="sidebar" id="sidebar">
+    <h2 style="text-align:center; color:#2b7a78; margin-bottom:20px;">个人设置</h2>
+    <div style="text-align:center; margin-bottom:20px;">
+        <div style="width:80px; height:80px; border-radius:50%; background:#ddd; margin:0 auto 10px; line-height:80px; color:#999; font-size:12px;">头像</div>
+        <input type="file" id="avatarUpload" style="display:none" onchange="alert('本地头像已更新！')">
+        <button onclick="document.getElementById('avatarUpload').click()" style="width:50%; margin:0 auto; font-size:12px;">更换头像</button>
+    </div>
+    <div style="margin-bottom:15px;">
+        <label style="font-size:14px;">个性签名：</label>
+        <input type="text" id="signature" placeholder="输入签名..." value="本知好帅">
+    </div>
+    
+    <hr style="margin:20px 0; border:0; border-top:1px solid #eee;">
+    <h3 style="font-size:15px; margin-bottom:10px; border:none; padding:0;">社交与设置</h3>
+    <button onclick="alert('大群聊：清平乐总群 (58人)\n(真实群聊需服务器)')" style="font-size:12px;">进入大群聊</button>
+    <button onclick="alert('暂无好友。\n点击头像可私聊、加好友（需服务器支持）')" style="font-size:12px;">我的好友列表</button>
+    <button onclick="alert('仅开发者/群主可发布公告、删帖。')" style="font-size:12px;">管理员面板 (展示)</button>
+    <button onclick="alert('自定义聊天背景/音乐（仅本机生效）')" style="font-size:12px;">自定义背景与音乐</button>
+    <button onclick="toggleSidebar()" style="background:#888; margin-top:20px;">关闭侧边栏</button>
+</div>
+
+<!-- 头部 -->
+<div class="header">
+    <div class="avatar-btn" onclick="toggleSidebar()">☰</div>
+    <span>清平乐•醉清欢</span>
+    <div style="width:30px;"></div>
+</div>
+
 <div class="content">
+    <!-- 1. 帮会工具 -->
     <div id="tab1" class="tab active">
-        <div class="card">
-            <h3>清平准则</h3>
-            <textarea id="rules" placeholder="输入帮会规则..." style="height: 300px;"></textarea>
+        <div class="sub-tabs">
+            <div class="sub-tab active" onclick="switchSub(1)">清平准则</div>
+            <div class="sub-tab" onclick="switchSub(2)">接龙</div>
+            <div class="sub-tab" onclick="switchSub(3)">投票</div>
+            <div class="sub-tab" onclick="switchSub(4)">统计</div>
+        </div>
+        
+        <div id="sub1" class="sub-content active">
+            <div class="card">
+                <textarea id="rules" style="height: 300px; border:none; resize:none;"></textarea>
+            </div>
+        </div>
+        <div id="sub2" class="sub-content">
+            <div class="card">
+                <h3>帮战接龙</h3>
+                <p style="font-size:12px; color:#e74c3c; margin-bottom:10px;">每人限接一次，不可匿名。</p>
+                <input type="text" id="signupName" placeholder="输入游戏ID报名">
+                <button onclick="addSignup()">确认报名</button>
+                <div id="signupList" style="margin-top: 15px;"></div>
+            </div>
+        </div>
+        <div id="sub3" class="sub-content">
+            <div class="card">
+                <h3>帮会投票</h3>
+                <p style="font-size:12px; color:#888; margin-bottom:10px;">管理员发布，限时24小时自动结算。</p>
+                <button onclick="alert('【演示】投票功能需后台支持。')">发起新投票 (管理员)</button>
+            </div>
+        </div>
+        <div id="sub4" class="sub-content">
+            <div class="card">
+                <h3>统计表</h3>
+                <p style="font-size:12px; color:#888; margin-bottom:10px;">每人日限参加一次。</p>
+                <button onclick="alert('已计入今日统计（本地记录）')">今日打卡</button>
+            </div>
         </div>
     </div>
+
+    <!-- 2. 每日清平 -->
     <div id="tab2" class="tab">
+        <div class="card" style="background:#e8f4f8; border:1px solid #2b7a78;">
+            <h3 style="color:#2b7a78;">今日公告</h3>
+            <p style="font-size:12px; color:#666; margin-bottom:5px;">(演示：任何人可发，真实环境仅限管理员)</p>
+            <textarea id="noticeInput" placeholder="发布今日公告..."></textarea>
+            <button onclick="addNotice()">发布公告</button>
+            <div id="noticeList" style="margin-top:10px; font-size:14px;"></div>
+        </div>
         <div class="card">
-            <h3>帮战接龙 (槿)</h3>
-            <input type="text" id="signupName" placeholder="输入游戏名字，点击报名就好">
-            <button onclick="addSignup()">接龙报名</button>
-            <div id="signupList" style="margin-top: 15px;"></div>
+            <h3>每日诗词赏析</h3>
+            <p id="poemText" style="font-size:15px; line-height:1.6; color:#555; font-style:italic;"></p>
+        </div>
+        <div class="card">
+            <h3>昨日风云榜 (模拟)</h3>
+            <p style="font-size:13px; line-height:1.8;">
+                🏆 人气榜：<b>本知</b> (访问量 1024)<br>
+                🌸 风华榜：<b>花繁若轩</b> (点赞 520)
+            </p>
         </div>
     </div>
+
+    <!-- 3. 花繁若轩 (朋友圈带图) -->
     <div id="tab3" class="tab">
         <div class="card">
-            <h3>蝶梦袅袅 (莳)</h3>
-            <p style="font-size:12px; color:#e74c3c; margin-bottom:10px;">提示：正常发，没事。内存有点小，大图会导致手机卡顿存不下，本知在尽量优化，烦请谅解，若惹得咱成员不太开心的话，不急不急，咱去欺负全服去，乖。</p>
-            <input type="file" id="imageUpload" accept="image/*" style="display:none;" onchange="uploadImage(event)">
-            <button onclick="document.getElementById('imageUpload').click()">从相册选择图片</button>
-            <div id="imageList" class="img-list"></div>
+            <h3>发布动态</h3>
+            <textarea id="postContent" placeholder="分享点什么..." style="height: 60px;"></textarea>
+            <div style="display:flex; gap:10px; align-items:center; margin-bottom:10px;">
+                <input type="file" id="postImage" accept="image/*" style="display:none" onchange="previewPostImage(event)">
+                <button onclick="document.getElementById('postImage').click()" style="width:100px; font-size:12px; margin:0;">+ 图片</button>
+                <span id="imgPreviewName" style="font-size:12px; color:#07c160;"></span>
+            </div>
+            <button onclick="addPost()">发布</button>
         </div>
+        <div id="postList"></div>
     </div>
+
+    <!-- 4. 蝶梦袅袅 (占位) -->
     <div id="tab4" class="tab">
         <div class="card">
-            <h3>花繁若轩 (寰)</h3>
-            <textarea id="postContent" placeholder="分享点什么给帮众吧..." style="height: 80px;"></textarea>
-            <button onclick="addPost()">发布动态</button>
-            <div id="postList" style="margin-top: 15px;"></div>
+            <h3>蝶梦袅袅</h3>
+            <p style="text-align:center; color:#888; font-size:14px; padding:20px 0;">—— 岁月静好，现世安稳 ——</p>
         </div>
     </div>
 </div>
+
+<!-- 底部导航 -->
 <div class="nav">
-    <div class="nav-item active" onclick="switchTab(1)">清平准则</div>
-    <div class="nav-item" onclick="switchTab(2)">帮战接龙</div>
-    <div class="nav-item" onclick="switchTab(3)">蝶梦袅袅</div>
-    <div class="nav-item" onclick="switchTab(4)">花繁若轩</div>
+    <div class="nav-item active" onclick="switchTab(1)">帮会工具</div>
+    <div class="nav-item" onclick="switchTab(2)">每日清平</div>
+    <div class="nav-item" onclick="switchTab(3)">花繁若轩</div>
+    <div class="nav-item" onclick="switchTab(4)">蝶梦袅袅</div>
 </div>
+
 <script>
+    // 登录逻辑
+    if(localStorage.getItem('is_logged') === 'yes') {
+        document.getElementById('login-mask').style.display = 'none';
+    }
+    function doLogin() {
+        localStorage.setItem('is_logged', 'yes');
+        document.getElementById('login-mask').style.display = 'none';
+    }
+
+    // 侧边栏逻辑
+    function toggleSidebar() {
+        document.getElementById('sidebar').classList.toggle('open');
+        document.getElementById('sidebarBg').classList.toggle('open');
+    }
+
+    // 主 Tab 切换
     function switchTab(num) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
         document.getElementById('tab' + num).classList.add('active');
         document.querySelectorAll('.nav-item')[num - 1].classList.add('active');
     }
+
+    // 工具子 Tab 切换
+    function switchSub(num) {
+        document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.sub-content').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.sub-tab')[num - 1].classList.add('active');
+        document.getElementById('sub' + num).classList.add('active');
+    }
+
+    // 帮规
     var rulesInput = document.getElementById('rules');
-    rulesInput.value = localStorage.getItem('ql_rules') || '1. 11月27日之前，听二当家的；11月28日起，清平乐一应事务，交由清平乐即任大当家定夺\n2. 团结友爱，互助和谐\n3. 任何成员不得以辱骂、诈骗、恐吓、威胁、传销等为手段，以牟利，报复等为目的，对我成员进行言语、人身伤害，损害帮会利益，破坏帮会团结友爱的大环境。违者一经查处，剥夺其在帮会内的一切权利，即刻踢除，终身不得入清平。\n4. 向阳而生，快乐成长';
+    rulesInput.value = localStorage.getItem('ql_rules') || '1. 11月27日之前，听二当家的；11月28日起，清平乐一应事务，交由清平乐即任大当家定夺。\n2. 团结友爱，互助和谐。\n3. 任何成员不得以辱骂、诈骗等为手段损害帮会利益，违者即刻踢除，终身不得入清平。\n4. 向阳而生，快乐成长。';
     rulesInput.addEventListener('input', function() { localStorage.setItem('ql_rules', this.value); });
 
+    // 接龙
     var signups = JSON.parse(localStorage.getItem('ql_signups') || '[]');
     function renderSignups() {
         var html = '';
         if(signups.length === 0) html = '<div style="color:#999;font-size:14px;text-align:center;">暂无报名</div>';
-        signups.forEach((name, index) => { html += `<div class="list-item"><span>${index+1}. ${name}</span><button class="del-btn" onclick="delSignup(${index})">取消</button></div>`; });
+        signups.forEach((name, index) => { 
+            html += `<div style="padding:8px 0; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-size:14px;">${index+1}. ${name}</span>
+                        <button style="width:auto; padding:2px 8px; font-size:12px; background:#e74c3c; margin:0;" onclick="delSignup(${index})">取消</button>
+                    </div>`; 
+        });
         document.getElementById('signupList').innerHTML = html;
     }
     function addSignup() {
         var name = document.getElementById('signupName').value.trim();
-        if(name) { signups.push(name); localStorage.setItem('ql_signups', JSON.stringify(signups)); document.getElementById('signupName').value = ''; renderSignups(); }
+        if(!name) return;
+        if(signups.includes(name)) { alert('你已经报名过了，每人限接一次！'); return; }
+        signups.push(name); 
+        localStorage.setItem('ql_signups', JSON.stringify(signups)); 
+        document.getElementById('signupName').value = ''; 
+        renderSignups(); 
     }
-    function delSignup(index) { signups.splice(index, 1); localStorage.setItem('ql_signups', JSON.stringify(signups)); renderSignups(); }
+    function delSignup(index) { 
+        signups.splice(index, 1); 
+        localStorage.setItem('ql_signups', JSON.stringify(signups)); 
+        renderSignups(); 
+    }
 
-    var images = JSON.parse(localStorage.getItem('ql_images') || '[]');
-    function renderImages() {
+    // 公告
+    var notices = JSON.parse(localStorage.getItem('ql_notices') || '[]');
+    function renderNotices() {
         var html = '';
-        if(images.length === 0) html = '<div style="color:#999;font-size:14px;text-align:center;width:100%;">暂无图片</div>';
-        images.forEach((base64, index) => {
-            html += `<div class="img-box"><img src="${base64}"><button class="del-btn" onclick="delImage(${index})">删除</button></div>`;
-        });
-        document.getElementById('imageList').innerHTML = html;
+        notices.forEach(n => { html += `<div style="margin-top:5px; padding:8px; background:#fff; border-radius:4px; font-size:13px;">${n}</div>`; });
+        document.getElementById('noticeList').innerHTML = html;
     }
-    function uploadImage(event) {
+    function addNotice() {
+        var txt = document.getElementById('noticeInput').value.trim();
+        if(txt) { notices.unshift(txt); localStorage.setItem('ql_notices', JSON.stringify(notices)); document.getElementById('noticeInput').value=''; renderNotices(); }
+    }
+
+    // 诗词
+    var poems = [
+        "昨夜雨疏风骤，浓睡不消残酒。——李清照",
+        "竹杖芒鞋轻胜马，谁怕？一蓑烟雨任平生。——苏轼",
+        "人生若只如初见，何事秋风悲画扇。——纳兰性德",
+        "乘风破浪会有时，直挂云帆济沧海。——李白"
+    ];
+    document.getElementById('poemText').innerText = poems[new Date().getDate() % poems.length];
+
+    // 朋友圈 (带图)
+    var posts = JSON.parse(localStorage.getItem('ql_posts') || '[]');
+    var currentBase64Img = '';
+
+    function previewPostImage(event) {
         var file = event.target.files[0];
         if(!file) return;
         if(file.size > 1024 * 1024) { alert("正常发，没事。内存有点小，本知在尽量优化，烦请谅解，若惹得咱成员不太开心的话，不急不急，咱去欺负全服去，乖"); return; }
         var reader = new FileReader();
         reader.onload = function(e) {
-            images.push(e.target.result);
-            localStorage.setItem('ql_images', JSON.stringify(images));
-            renderImages();
-            document.getElementById('imageUpload').value = '';
+            currentBase64Img = e.target.result;
+            document.getElementById('imgPreviewName').innerText = "已附图片";
         };
         reader.readAsDataURL(file);
     }
-    function delImage(index) {
-        images.splice(index, 1);
-        localStorage.setItem('ql_images', JSON.stringify(images));
-        renderImages();
-    }
 
-    var posts = JSON.parse(localStorage.getItem('ql_posts') || '[]');
     function renderPosts() {
         var html = '';
         if(posts.length === 0) html = '<div style="color:#999;font-size:14px;text-align:center;">暂无动态</div>';
         posts.forEach((item, index) => {
-            html += `<div class="list-item" style="display:block;padding:15px 0;"><div style="font-size:14px;margin-bottom:5px;line-height:1.5;">${item.content}</div><div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:12px;color:#999;">${item.time}</span><button class="del-btn" style="padding:3px 8px;" onclick="delPost(${index})">删除</button></div></div>`;
+            var imgHtml = item.img ? `<img src="${item.img}" class="img-preview">` : '';
+            html += `
+            <div class="card" style="padding:15px;">
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                    <b style="font-size:14px; color:#2b7a78;">本知</b>
+                    <span style="font-size:12px; color:#999;">${item.time}</span>
+                </div>
+                <div style="font-size:14px; line-height:1.5;">${item.content}</div>
+                ${imgHtml}
+                <div style="text-align:right; margin-top:10px;">
+                    <button style="width:auto; padding:3px 8px; font-size:12px; background:#e74c3c; margin:0;" onclick="delPost(${index})">删除</button>
+                </div>
+            </div>`;
         });
         document.getElementById('postList').innerHTML = html;
     }
+
     function addPost() {
         var content = document.getElementById('postContent').value.trim();
-        if(content) { var time = new Date().toLocaleString(); posts.unshift({content: content, time: time}); localStorage.setItem('ql_posts', JSON.stringify(posts)); document.getElementById('postContent').value = ''; renderPosts(); }
+        if(!content && !currentBase64Img) return;
+        var time = new Date().toLocaleString();
+        posts.unshift({content: content, time: time, img: currentBase64Img});
+        localStorage.setItem('ql_posts', JSON.stringify(posts));
+        document.getElementById('postContent').value = '';
+        document.getElementById('imgPreviewName').innerText = '';
+        currentBase64Img = '';
+        document.getElementById('postImage').value = '';
+        renderPosts();
     }
-    function delPost(index) { posts.splice(index, 1); localStorage.setItem('ql_posts', JSON.stringify(posts)); renderPosts(); }
 
-    window.onload = function() { renderSignups(); renderImages(); renderPosts(); };
+    function delPost(index) {
+        posts.splice(index, 1);
+        localStorage.setItem('ql_posts', JSON.stringify(posts));
+        renderPosts();
+    }
+
+    // 初始化
+    window.onload = function() { 
+        renderSignups(); 
+        renderPosts(); 
+        renderNotices();
+    };
 </script>
 </body>
-</html>
+                </html>
