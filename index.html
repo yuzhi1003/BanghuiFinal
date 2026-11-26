@@ -667,12 +667,22 @@ function boot() {
    没填 url/key 时自动退回「本机存储」模式，功能不受影响。
    填入 Supabase 项目地址与 anon key 后，所有成员共享同一份数据，
    动态、聊天、接龙、投票等改动会在几百毫秒内推送到其他人手机上。 */
+/* 内置云端配置（随文件下发，优先级最高） */
+window.QLZ_CLOUD = {
+  p: 'gh', owner: 'yuzhi1003', repo: 'qlz-data', branch: 'main', path: 'qlz-data.json',
+  token: ''
+};
 const CLOUD = Object.assign(
-  { url: '', key: '' },
-  (typeof window !== 'undefined' && window.QLZ_CLOUD) || {},
-  (() => { try { return JSON.parse(localStorage.getItem('qlz_cloud') || '{}'); } catch (e) { return {}; } })()
+  { p: '', url: '', key: '', owner: '', repo: '', branch: 'main', path: 'qlz-data.json', token: '' },
+  (() => { try { return JSON.parse(localStorage.getItem('qlz_cloud') || '{}'); } catch (e) { return {}; } })(),
+  (typeof window !== 'undefined' && window.QLZ_CLOUD) || {}
 );
-const cloudOn = () => !!(CLOUD.url && CLOUD.key);
+if (!CLOUD.p) CLOUD.p = (CLOUD.owner && CLOUD.token) ? 'gh' : (CLOUD.url && CLOUD.key ? 'sb' : '');
+const cloudOn = () => CLOUD.p === 'gh'
+  ? !!(CLOUD.owner && CLOUD.repo && CLOUD.token)
+  : !!(CLOUD.p === 'sb' && CLOUD.url && CLOUD.key);
+if (!CLOUD.branch) CLOUD.branch = 'main';
+if (!CLOUD.path) CLOUD.path = 'qlz-data.json';
 
 const SYNC_ARR = ['users', 'posts', 'signups', 'polls', 'stats', 'notices', 'groups', 'reqs', 'flyflowers'];
 const SYNC_MSG = ['groupMsgs', 'dm'];
@@ -817,6 +827,135 @@ async function rpcPatch(p) {
   return r.json();
 }
 
+/* ---------- GitHub 仓库作为数据后端 ----------
+   数据存成仓库里一个 JSON 文件，用 Contents API 读写。
+   每次推送：先读最新、把本地改动并上去、再写回；冲突（409）自动重读重试。 */
+const GHAPI = 'https://api.github.com';
+function ghH(extra) {
+  return Object.assign({
+    'Accept': 'application/vnd.github+json',
+    'Authorization': 'token ' + CLOUD.token,
+    'X-GitHub-Api-Version': '2022-11-28'
+  }, extra || {});
+}
+function b64enc(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+}
+function b64dec(b) {
+  const bin = atob((b || '').replace(/\s/g, ''));
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
+function ghUrl(path) {
+  return GHAPI + '/repos/' + CLOUD.owner + '/' + CLOUD.repo + '/contents/' + (path || CLOUD.path);
+}
+async function ghRead() {
+  const r = await fetch(ghUrl() + '?ref=' + encodeURIComponent(CLOUD.branch), { headers: ghH(), cache: 'no-store' });
+  if (r.status === 404) return { sha: null, doc: null };
+  if (!r.ok) throw new Error('GH ' + r.status);
+  const j = await r.json();
+  let doc = null;
+  try { doc = JSON.parse(b64dec(j.content)); } catch (e) { doc = null; }
+  return { sha: j.sha, doc };
+}
+async function ghPut(path, contentB64, sha, msg) {
+  const body = { message: msg || ('qlz ' + Date.now().toString(36)), content: contentB64, branch: CLOUD.branch };
+  if (sha) body.sha = sha;
+  const r = await fetch(ghUrl(path), {
+    method: 'PUT',
+    headers: ghH({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(body)
+  });
+  let j = null; try { j = await r.json(); } catch (e) { }
+  return { ok: r.ok, status: r.status, sha: j && j.content && j.content.sha, json: j };
+}
+async function ghFlush(p) {
+  for (let i = 0; i < 4; i++) {
+    const cur = await ghRead();
+    const doc = (cur.doc && typeof cur.doc === 'object') ? cur.doc : {};
+    normalizeDoc(doc);
+    applyPatchTo(doc, p);
+    const w = await ghPut(CLOUD.path, b64enc(JSON.stringify(doc)), cur.sha, '同步 ' + new Date().toLocaleTimeString());
+    if (w.ok) { DB.sha = w.sha; DB.last = snapshot(); DB.lastEvent = Date.now(); return; }
+    if (w.status === 409 || w.status === 422) continue;
+    throw new Error('GH put ' + w.status + ' ' + ((w.json && w.json.message) || ''));
+  }
+  throw new Error('GH 冲突重试失败');
+}
+async function ghUpload(dataUrl, kind, filename) {
+  const blob = await (await fetch(dataUrl)).blob();
+  const m = blob.type || '';
+  let ext = 'bin';
+  if (m.indexOf('png') > -1) ext = 'png';
+  else if (m.indexOf('webp') > -1) ext = 'webp';
+  else if (m.indexOf('jpeg') > -1 || m.indexOf('jpg') > -1) ext = 'jpg';
+  else if (m.indexOf('mpeg') > -1 || m.indexOf('mp3') > -1) ext = 'mp3';
+  else if (m.indexOf('wav') > -1) ext = 'wav';
+  else if (m.indexOf('ogg') > -1) ext = 'ogg';
+  else if (m.indexOf('m4a') > -1 || m.indexOf('mp4') > -1) ext = 'm4a';
+  const name = 'assets/' + kind + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7) + '.' + ext;
+  const b64 = String(dataUrl).split(',')[1] || '';
+  const w = await ghPut(name, b64.replace(/\s/g, ''), null, '资源 ' + new Date().toLocaleTimeString());
+  if (!w.ok) throw new Error('上传失败 ' + w.status);
+  return 'https://cdn.jsdelivr.net/gh/' + CLOUD.owner + '/' + CLOUD.repo + '@' + CLOUD.branch + '/' + name;
+}
+async function ghPoll(force) {
+  try { await flushPatch(); } catch (e) { }
+  let cur;
+  try { cur = await ghRead(); } catch (e) { return; }
+  if (!cur.sha) return;
+  if (cur.sha === DB.sha && !force) return;
+  if (!cur.doc || !cur.doc.users) { DB.sha = cur.sha; return; }
+  const auth = localAuth();
+  if (auth.me && !cur.doc.users.some(x => x.id === auth.me || x.deviceId === getDevice())) { DB.sha = cur.sha; return; }
+  state = normalizeDoc(Object.assign(cur.doc, auth));
+  const u = state.users.find(x => x.id === auth.me) || state.users.find(x => x.deviceId === getDevice());
+  if (u) setUid(u.id); else { state.me = null; }
+  DB.last = snapshot(); DB.sha = cur.sha;
+  persistLocal();
+  if (state.me && me()) { softRender(); if (typeof chatCtx !== 'undefined' && chatCtx) renderChat(); }
+}
+async function ghInit() {
+  try {
+    const cur = await ghRead();
+    const doc = cur.doc;
+    if (doc && doc.users && doc.users.length && hadReg()) {
+      const myId = getUid();
+      const localMe = (state.users || []).find(x => x.id === myId);
+      if (localMe && !doc.users.some(x => x.id === localMe.id || (localMe.deviceId && x.deviceId === localMe.deviceId))) {
+        localMe.deviceId = getDevice();
+        doc.users.push(localMe);
+      }
+    }
+    if (doc && doc.users && doc.users.length) {
+      state = normalizeDoc(Object.assign(doc, localAuth()));
+      const u = state.users.find(x => x.id === getUid()) || state.users.find(x => x.deviceId === getDevice());
+      if (u) setUid(u.id); else { state.me = null; state.regUid = null; }
+    } else {
+      state = Object.assign(state, localAuth());
+    }
+    DB.sha = cur.sha;
+    DB.last = (doc && doc.users && doc.users.length) ? snapshot() : {};
+    DB.ready = true;
+    persistLocal();
+    if (!doc || !doc.users || !doc.users.length) queueSync();
+    if (DB.poll) clearInterval(DB.poll);
+    DB.poll = setInterval(() => pollOnce(false), 15000);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && DB.ready) { pollOnce(true); }
+    });
+    setTimeout(() => pollOnce(true), 1500);
+  } catch (e) {
+    console.warn('[云同步] 初始化失败，切换本地模式', e);
+    DB.ready = false;
+    setTimeout(() => { toast('云端未连接，当前为本机模式'); }, 1800);
+  }
+}
+
 let syncTimer = null;
 function queueSync() {
   if (!cloudOn() || !DB.ready) return;
@@ -832,11 +971,15 @@ async function flushPatch() {
   if (!hasPatch(p)) return;
   DB.busy = true;
   try {
-    await rpcPatch(p);
-    DB.last = next;
-    DB.lastEvent = Date.now();
-    if (DB.channel && DB.channel.send) {
-      try { await DB.channel.send({ type: 'broadcast', event: 'patch', payload: p }); } catch (e) { }
+    if (CLOUD.p === 'gh') {
+      await ghFlush(p);
+    } else {
+      await rpcPatch(p);
+      DB.last = next;
+      DB.lastEvent = Date.now();
+      if (DB.channel && DB.channel.send) {
+        try { await DB.channel.send({ type: 'broadcast', event: 'patch', payload: p }); } catch (e) { }
+      }
     }
   } catch (e) {
     console.warn('[云同步] 推送失败，稍后重试', e);
@@ -914,6 +1057,7 @@ async function pullDoc(rev) {
 
 async function pollOnce(force) {
   if (!DB.ready) return;
+  if (CLOUD.p === 'gh') { await ghPoll(force); return; }
   try {
     await flushPatch();
     const rows = await restGet('/rest/v1/qlz_state?id=eq.main&select=updated_at');
@@ -937,6 +1081,7 @@ function localAuth() {
 }
 
 async function cloudInit() {
+  if (CLOUD.p === 'gh') { await ghInit(); return; }
   try {
     const rows = await restGet('/rest/v1/qlz_state?id=eq.main&select=doc,updated_at');
     const row = rows && rows[0];
@@ -978,6 +1123,7 @@ async function cloudInit() {
 
 /* ---------- 上传图片 / 音频到云端 ---------- */
 async function cloudUpload(dataUrl, kind, filename) {
+  if (CLOUD.p === 'gh') return ghUpload(dataUrl, kind, filename);
   const blob = await (await fetch(dataUrl)).blob();
   let ext = 'bin';
   const m = blob.type || '';
@@ -999,22 +1145,37 @@ async function cloudUpload(dataUrl, kind, filename) {
 }
 
 
-/* 云同步配置面板 */
+/* 云同步配置面板（GitHub 仓库模式 / Supabase 模式） */
 function cloudConfig() {
   const on = cloudOn();
+  const gh = CLOUD.p === 'gh';
   openModal(`<h3>云同步设置</h3>
-    <p class="hint" style="margin:6px 0 12px">全部用户共用同一套云端。填入 Supabase 的 Project URL 与 anon key 后，各位的手机即可实时互通。</p>
-    <input class="ta" id="cfUrl" style="height:44px" placeholder="https://xxxx.supabase.co" value="${on ? CLOUD.url : ''}">
-    <input class="ta" id="cfKey" style="height:44px;margin-top:8px" placeholder="anon public key" value="${on ? CLOUD.key : ''}">
-    <div class="hint" style="margin-top:8px">当前状态：${on ? '已配置 · ' + CLOUD.url.replace(/https?:\/\//, '') : '未配置（本机单机模式）'}</div>
+    <p class="hint" style="margin:6px 0 12px">填 GitHub 仓库（推荐，国内可访问）。仓库与密钥只用来存帮会数据，填一次，重启后即生效。</p>
+    <input class="ta" id="cfOwner" style="height:44px" placeholder="仓库：用户名/仓库名，如 yuzhi1003/qlz-data" value="${gh ? (CLOUD.owner + '/' + CLOUD.repo) : ''}">
+    <input class="ta" id="cfToken" style="height:44px;margin-top:8px" placeholder="访问密钥（ghp_ 或 github_pat_ 开头）" value="${gh ? CLOUD.token : ''}">
+    <div class="hint" style="margin-top:10px">以下为 Supabase（海外，可能连不上，可留空）</div>
+    <input class="ta" id="cfUrl" style="height:44px;margin-top:6px" placeholder="https://xxxx.supabase.co" value="${CLOUD.p === 'sb' ? CLOUD.url : ''}">
+    <input class="ta" id="cfKey" style="height:44px;margin-top:8px" placeholder="anon public key" value="${CLOUD.p === 'sb' ? CLOUD.key : ''}">
+    <div class="hint" style="margin-top:8px">当前状态：${on ? (gh ? 'GitHub · ' + CLOUD.owner + '/' + CLOUD.repo : 'Supabase · ' + CLOUD.url.replace(/https?:\/\//, '')) : '未配置（本机单机模式）'}</div>
     <div class="row mt8"><button class="btn btn-mini btn-ghost" onclick="clearCloud()">清除配置</button></div>
     <div class="row mt8" style="gap:8px"><button class="btn" onclick="saveCloud()">保存并重启</button><button class="btn btn-ghost" onclick="closeModal()">取消</button></div>`);
 }
 function saveCloud() {
+  const o = (($('#cfOwner') || {}).value || '').trim().replace(/^https?:\/\/github\.com\//, '').replace(/\.git$/, '').replace(/\/+$/, '');
+  const t = (($('#cfToken') || {}).value || '').trim();
   const u = (($('#cfUrl') || {}).value || '').trim().replace(/\/+$/, '');
   const k = (($('#cfKey') || {}).value || '').trim();
-  if (!u || !k) return toast('URL 与 key 都要填');
-  localStorage.setItem('qlz_cloud', JSON.stringify({ url: u, key: k }));
+  if (o && t) {
+    const parts = o.split('/');
+    if (parts.length < 2) return toast('仓库要写成 用户名/仓库名');
+    localStorage.setItem('qlz_cloud', JSON.stringify({
+      p: 'gh', owner: parts[0], repo: parts[1], branch: 'main', path: 'qlz-data.json', token: t
+    }));
+  } else if (u && k) {
+    localStorage.setItem('qlz_cloud', JSON.stringify({ p: 'sb', url: u, key: k }));
+  } else {
+    return toast('要么填 GitHub 仓库+密钥，要么填 Supabase 两项');
+  }
   closeModal(); toast('已保存，正在重启');
   setTimeout(() => location.reload(), 800);
 }
@@ -2536,4 +2697,4 @@ function init() {
 init();
 </script>
 </body>
-  </html>
+</html>
