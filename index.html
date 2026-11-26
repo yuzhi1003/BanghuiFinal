@@ -674,8 +674,8 @@ window.QLZ_CLOUD = {
 };
 const CLOUD = Object.assign(
   { p: '', url: '', key: '', owner: '', repo: '', branch: 'main', path: 'qlz-data.json', token: '' },
-  (() => { try { return JSON.parse(localStorage.getItem('qlz_cloud') || '{}'); } catch (e) { return {}; } })(),
-  (typeof window !== 'undefined' && window.QLZ_CLOUD) || {}
+  (typeof window !== 'undefined' && window.QLZ_CLOUD) || {},
+  (() => { try { return JSON.parse(localStorage.getItem('qlz_cloud') || '{}'); } catch (e) { return {}; } })()
 );
 if (!CLOUD.p) CLOUD.p = (CLOUD.owner && CLOUD.token) ? 'gh' : (CLOUD.url && CLOUD.key ? 'sb' : '');
 const cloudOn = () => CLOUD.p === 'gh'
@@ -1165,6 +1165,8 @@ function saveCloud() {
   const t = (($('#cfToken') || {}).value || '').trim();
   const u = (($('#cfUrl') || {}).value || '').trim().replace(/\/+$/, '');
   const k = (($('#cfKey') || {}).value || '').trim();
+  if (t && !/^(ghp_|github_pat_)/.test(t)) return toast('密钥要以 ghp_ 开头，请重新复制完整一串');
+  if (t && t.length < 20) return toast('密钥看起来太短，请重新复制完整一串');
   if (o && t) {
     const parts = o.split('/');
     if (parts.length < 2) return toast('仓库要写成 用户名/仓库名');
