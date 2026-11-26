@@ -10,7 +10,12 @@ OUT=".apkout"
 rm -rf "$OUT"; mkdir -p "$OUT/classes" "$OUT/dex" "$OUT/assets"
 cp index.html "$OUT/assets/index.html"
 
-"$BT/aapt2" link -o "$OUT/base.apk" -I "$PLAT" \
+RES=""
+if [ -d android/res ]; then
+  "$BT/aapt2" compile --dir android/res -o "$OUT/res.zip"
+  RES="$OUT/res.zip"
+fi
+"$BT/aapt2" link -o "$OUT/base.apk" -I "$PLAT" $RES \
   --manifest android/AndroidManifest.xml \
   --min-sdk-version 24 --target-sdk-version 34 \
   -A "$OUT/assets" || exit 1
