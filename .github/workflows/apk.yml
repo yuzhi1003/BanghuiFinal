@@ -16,11 +16,15 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: 装 Android 命令行工具
-        uses: android-actions/setup-android@v3
-
-      - name: 装编译所需组件
-        run: sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+      - name: 准备 Android SDK
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls "$ANDROID_HOME/build-tools" || true
+          ls "$ANDROID_HOME/platforms" || true
+          SDKM=$(find "$ANDROID_HOME" -name sdkmanager -type f | head -1)
+          echo "sdkmanager: $SDKM"
+          yes | "$SDKM" --licenses > /dev/null 2>&1 || true
+          "$SDKM" "platforms;android-34" "build-tools;34.0.0" > /dev/null 2>&1 || true
 
       - name: 编译并签名
         run: bash android/build.sh
