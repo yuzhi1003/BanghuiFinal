@@ -1149,7 +1149,7 @@ async function cloudUpload(dataUrl, kind, filename) {
 function cloudConfig() {
   const on = cloudOn();
   const gh = CLOUD.p === 'gh';
-  openModal(`<h3>云同步设置</h3>
+  openModal(`<h3>云同步设置 <span class="hint" style="font-size:12px;opacity:.6">v3</span></h3>
     <p class="hint" style="margin:6px 0 12px">填 GitHub 仓库（推荐，国内可访问）。仓库与密钥只用来存帮会数据，填一次，重启后即生效。</p>
     <input class="ta" id="cfOwner" style="height:44px" placeholder="仓库：用户名/仓库名，如 yuzhi1003/qlz-data" value="${gh ? (CLOUD.owner + '/' + CLOUD.repo) : ''}">
     <input class="ta" id="cfToken" style="height:44px;margin-top:8px" placeholder="访问密钥（ghp_ 或 github_pat_ 开头）" value="${gh ? CLOUD.token : ''}">
