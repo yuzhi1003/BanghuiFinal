@@ -702,6 +702,17 @@ function setUid(id) {
   else { localStorage.removeItem('qlz_uid'); state.me = null; }
 }
 
+/* 找出本机对应的账号：先按 uid，再按 deviceId / 历史 deviceIds */
+function findMine(users) {
+  users = users || [];
+  const uidNow = getUid(), dev = getDevice();
+  let u = uidNow ? users.find(x => x.id === uidNow) : null;
+  if (u) return u;
+  u = users.find(x => x.deviceId === dev);
+  if (u) return u;
+  u = users.find(x => (x.deviceIds || []).indexOf(dev) > -1);
+  return u || null;
+}
 function normalizeDoc(doc) {
   ['users', 'posts', 'signups', 'polls', 'stats', 'notices', 'groups', 'reqs', 'flyflowers'].forEach(k => { if (!Array.isArray(doc[k])) doc[k] = []; });
   ['groupMsgs', 'dm', 'visits', 'likes'].forEach(k => { if (!doc[k] || typeof doc[k] !== 'object') doc[k] = {}; });
@@ -911,9 +922,9 @@ async function ghPoll(force) {
   if (cur.sha === DB.sha && !force) return;
   if (!cur.doc || !cur.doc.users) { DB.sha = cur.sha; return; }
   const auth = localAuth();
-  if (auth.me && !cur.doc.users.some(x => x.id === auth.me || x.deviceId === getDevice())) { DB.sha = cur.sha; return; }
+  if (auth.me && !findMine(cur.doc.users)) { DB.sha = cur.sha; return; }
   state = normalizeDoc(Object.assign(cur.doc, auth));
-  const u = state.users.find(x => x.id === auth.me) || state.users.find(x => x.deviceId === getDevice());
+  const u = findMine(state.users);
   if (u) setUid(u.id); else { state.me = null; }
   DB.last = snapshot(); DB.sha = cur.sha;
   persistLocal();
@@ -933,7 +944,7 @@ async function ghInit() {
     }
     if (doc && doc.users && doc.users.length) {
       state = normalizeDoc(Object.assign(doc, localAuth()));
-      const u = state.users.find(x => x.id === getUid()) || state.users.find(x => x.deviceId === getDevice());
+      const u = findMine(state.users);
       if (u) setUid(u.id); else { state.me = null; state.regUid = null; }
     } else {
       state = Object.assign(state, localAuth());
@@ -1046,9 +1057,9 @@ async function pullDoc(rev) {
   if (!doc || !doc.users) return;
   const auth = localAuth();
   // 服务端还没同步到我的账号时，保留本机数据，避免误退出
-  if (auth.me && !doc.users.some(x => x.id === auth.me || x.deviceId === getDevice())) return;
+  if (auth.me && !findMine(doc.users)) return;
   state = normalizeDoc(Object.assign(doc, auth));
-  const u = state.users.find(x => x.id === auth.me) || state.users.find(x => x.deviceId === getDevice());
+  const u = findMine(state.users);
   if (u) setUid(u.id); else { state.me = null; }
   DB.last = snapshot();
   DB.rev = rev;
@@ -1097,7 +1108,7 @@ async function cloudInit() {
     }
     if (doc && doc.users && doc.users.length) {
       state = normalizeDoc(Object.assign(doc, localAuth()));
-      const u = state.users.find(x => x.id === getUid()) || state.users.find(x => x.deviceId === getDevice());
+      const u = findMine(state.users);
       if (u) setUid(u.id); else { state.me = null; state.regUid = null; }
     } else {
       state = Object.assign(state, localAuth());
@@ -1149,7 +1160,7 @@ async function cloudUpload(dataUrl, kind, filename) {
 function cloudConfig() {
   const on = cloudOn();
   const gh = CLOUD.p === 'gh';
-  openModal(`<h3>云同步设置 <span class="hint" style="font-size:12px;opacity:.6">v4</span></h3>
+  openModal(`<h3>云同步设置 <span class="hint" style="font-size:12px;opacity:.6">v5</span></h3>
     <p class="hint" style="margin:6px 0 12px">填 GitHub 仓库（推荐，国内可访问）。仓库与密钥只用来存帮会数据，填一次，重启后即生效。</p>
     <input class="ta" id="cfOwner" style="height:44px" placeholder="仓库：用户名/仓库名，如 yuzhi1003/qlz-data" value="${gh ? (CLOUD.owner + '/' + CLOUD.repo) : ''}">
     <input class="ta" id="cfToken" style="height:44px;margin-top:8px" placeholder="访问密钥（ghp_ 或 github_pat_ 开头）" value="${gh ? CLOUD.token : ''}">
@@ -1449,11 +1460,39 @@ function wechatFlow() {
   $('#wxAllow').onclick = () => {
     const name = $('#wxName').value.trim();
     if (!name) { toast('请填写昵称'); return; }
-    if (state.users.some(u => u.name === name)) { toast('该昵称已被占用，请换一个'); return; }
     register(name, avatar);
   };
 }
-function register(name, avatar) {
+async function register(name, avatar) {
+  name = String(name || '').trim();
+  // 云端已有同名账号：直接认领，绝不重复建号
+  if (CLOUD.p === 'gh' && cloudOn()) {
+    try {
+      toast('正在核对云端账号…');
+      const cur = await ghRead();
+      if (cur.doc && Array.isArray(cur.doc.users)) {
+        const remote = cur.doc.users;
+        // 合并到本地：云端有的补齐，避免后面比对出错
+        remote.forEach(ru => {
+          if (!state.users.some(x => x.id === ru.id)) state.users.push(ru);
+        });
+        const exist = remote.find(u => u.name === name);
+        if (exist) {
+          const devs = new Set(exist.deviceIds || []);
+          if (exist.deviceId) devs.add(exist.deviceId);
+          devs.add(getDevice());
+          exist.deviceIds = Array.from(devs);
+          state.me = exist.id; state.registered = true; state.regUid = exist.id;
+          setUid(exist.id);
+          persistLocal(); queueSync();
+          toast('已认出你的账号：' + exist.name);
+          setTimeout(() => enterApp(), 600);
+          return;
+        }
+      }
+    } catch (e) { /* 网络不好就按老流程走 */ }
+  }
+  if (state.users.some(u => u.name === name)) { toast('该昵称已被占用，请换一个'); return; }
   const id = 'u_me_' + Date.now().toString(36);
   const u = {
     id, name, sig: '春风不止，清平不散。', avatar: avatar || svgAvatar(name),
@@ -2487,7 +2526,7 @@ function renderChat() {
   list.forEach(msg => {
     if (msg.type === 'sys') { html += `<div class="msg sys"><div class="bubble">${esc(msg.text)}</div></div>`; return; }
     const mine = msg.from === state.me;
-    const u = userById(msg.from) || { name: '故人' };
+    const u = userById(msg.from) || (msg.nm ? { name: msg.nm } : { name: '故人' });
     const who = (!mine && isGroup) ? `<div class="who">${esc(u.name)}</div>` : '';
     const body = msg.kind === 'img'
       ? `<img src="${msg.text}" style="max-width:180px;border-radius:10px;display:block">`
@@ -2502,7 +2541,7 @@ function renderChat() {
 function sendChatMsg(kind, text) {
   if (!chatCtx) return;
   const list = chatMessages();
-  const msg = { id: uid('m'), from: state.me, text, kind: kind || 'text', time: Date.now() };
+  const msg = { id: uid('m'), from: state.me, nm: (me() || {}).name || '', text, kind: kind || 'text', time: Date.now() };
   list.push(msg);
   saveState(); renderChat();
   const inp = $('#chatInput'); if (inp) inp.value = '';
