@@ -1,6 +1,11 @@
 set -e
-BT="$ANDROID_HOME/build-tools/34.0.0"
-PLAT="$ANDROID_HOME/platforms/android-34/android.jar"
+BT=$(ls -d "$ANDROID_HOME"/build-tools/* 2>/dev/null | sort -V | tail -1)
+if [ -f "$ANDROID_HOME/platforms/android-34/android.jar" ]; then
+  PLAT="$ANDROID_HOME/platforms/android-34/android.jar"
+else
+  PLAT=$(ls -d "$ANDROID_HOME"/platforms/android-*/android.jar 2>/dev/null | sort -V | tail -1)
+fi
+echo "build-tools: $BT"; echo "platform: $PLAT"
 OUT=".apkout"
 rm -rf "$OUT"; mkdir -p "$OUT/classes" "$OUT/dex" "$OUT/assets"
 cp index.html "$OUT/assets/index.html"
