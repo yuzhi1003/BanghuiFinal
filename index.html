@@ -365,12 +365,12 @@ audio{width:100%;margin-top:6px}
 <div id="authScreen" class="hidden">
   <div class="auth-logo">樂</div>
   <div class="auth-title">清平乐•醉清欢</div>
-  <div class="auth-sub">一帮一会 · 一世清欢</div>
+  <div class="auth-sub">一知一梦 · 一世清欢</div>
   <div class="auth-panel">
     <button class="btn btn-wechat" id="btnWechat">微信一键登录</button>
     <div class="auth-note" id="authNote">
-      本设备仅可注册一个账号，一经注册不可再开小号。<br>
-      首次登录即自动注册并成为本帮会「开发者」。
+      本设备仅可注册一个账号，一经注册不可再开小号，桀桀桀。<br>
+      仅季云知成为本帮会「开发者」。
     </div>
   </div>
 </div>
@@ -382,7 +382,7 @@ audio{width:100%;margin-top:6px}
     <div class="brand">
       <div class="brand-seal">樂</div>
       <div class="brand-title">清平乐•醉清欢
-        <small id="topSub">清平世界 · 醉此清欢</small>
+        <small id="topSub">漫许流年 · 醉此清欢</small>
       </div>
     </div>
     <div class="topbar-actions">
@@ -442,7 +442,7 @@ audio{width:100%;margin-top:6px}
   <div class="chat-body" id="chatBody"></div>
   <div class="chat-input">
     <button class="plus" id="chatImg">＋</button>
-    <input id="chatInput" placeholder="书一言，寄君听……" autocomplete="off">
+    <input id="chatInput" placeholder="花一笺，与卿评……" autocomplete="off">
     <button class="send" id="chatSend">寄</button>
   </div>
 </section>
@@ -452,7 +452,7 @@ audio{width:100%;margin-top:6px}
 
 <script>'use strict';
 /* =========================================================
-   清平乐•醉清欢  ·  帮会社区（纯前端本地数据版）
+   清平乐•醉清欢  ·  帅知社区（纯前端本地数据版）
    ========================================================= */
 
 const KEY = 'qlz_state_v2';
@@ -540,25 +540,20 @@ function loadState() {
   try { const raw = localStorage.getItem(KEY); if (raw) return JSON.parse(raw); } catch (e) { }
   return null;
 }
-function saveState() {
+function persistLocal() {
   try { localStorage.setItem(KEY, JSON.stringify(state)); }
-  catch (e) { toast('本地存储空间不足，请删除部分图片后再试'); }
+  catch (e) { toast('正常发，没事，咱这个内存有点小，本知正在尽量优化，若惹得大家不开心的话，咱们欺负全服去，乖'); }
+}
+function saveState() {
+  persistLocal();
+  if (typeof queueSync === 'function') queueSync();
 }
 
 function npcUsers() {
   return [
-    { id: 'u_jyz', name: '云舟', sig: '清风入怀，云舟自渡。', seedKey: 'jyz' },
-    { id: 'u_hf', name: '花繁若轩', sig: '花开繁处，自有清欢。', seedKey: 'hf' },
-    { id: 'u_dm', name: '蝶梦', sig: '一帘蝶梦，半卷清词。', seedKey: 'dm' },
-    { id: 'u_jin', name: '槿', sig: '槿花朝开暮落，惜取眼前。', seedKey: 'jin' },
-    { id: 'u_huan', name: '寰', sig: '寰宇为笺，落笔成诗。', seedKey: 'huan' },
-    { id: 'u_qing', name: '清和', sig: '清和天气，人间好时节。', seedKey: 'qing' },
-    { id: 'u_muyu', name: '沐雨', sig: '沐一场旧雨，等一个故人。', seedKey: 'muyu' },
-    { id: 'u_zhuyin', name: '竹隐', sig: '竹影深处，藏一段闲。', seedKey: 'zhuyin' },
-    { id: 'u_tingxue', name: '听雪', sig: '听雪落无声，亦听人心。', seedKey: 'tingxue' },
-    { id: 'u_nanzhi', name: '南枝', sig: '南枝向暖，北枝生寒。', seedKey: 'nanzhi' },
-    { id: 'u_yanhui', name: '雁回', sig: '雁字回时，月满西楼。', seedKey: 'yanhui' }
-  ].map((u, i) => ({
+    { id: 'u_jyz', name: '大雪', sig: '风漫漫，雪云澜。', seedKey: 'yx' },
+   
+    ].map((u, i) => ({
     ...u,
     avatar: svgAvatar(u.name),
     bg: null, music: null, splash: null, chatBg: null, chatMusic: null,
@@ -583,22 +578,22 @@ function baseState() {
   const posts = [
     {
       id: 'p_hf1', uid: 'u_hf', time: now - 23 * 3600000,
-      content: '今日山色极好，云在肩头，风在袖里。\n发一张昨日画的小景，与诸君共赏清欢。',
+      content: '今日有帅知的山色极好，云在肩头，知在袖里。\n发一张昨日画的大帅知，与诸君共赏清欢。',
       imgs: [svgArt('a')], likes: ['u_jyz', 'u_dm', 'u_jin', 'u_huan', 'u_qing', 'u_muyu']
     },
     {
       id: 'p_dm1', uid: 'u_dm', time: now - 9 * 3600000,
-      content: '新抄了一阕《如梦令》，墨还未干。\n若你也爱清照，来我主页坐坐。',
+      content: '新抄了一阕《如梦令》，墨还未干。\ndoyoulovemelove知love清照，来我主页坐坐。',
       imgs: [], likes: ['u_hf', 'u_jyz', 'u_tingxue', 'u_nanzhi']
     },
     {
       id: 'p_jin1', uid: 'u_jin', time: now - 3 * 3600000,
-      content: '帮里的接龙记得接呀，一人一接，不可匿名——这是咱清平的规矩。',
+      content: '帮里的接龙记得接呀，一人一接，不可匿名——这是咱欺负全服的默契。',
       imgs: [svgArt('b')], likes: ['u_hf', 'u_muyu']
     },
     {
       id: 'p_yan1', uid: 'u_yanhui', time: now - 40 * 60000,
-      content: '秋风起，雁南回。愿各位夜里都有灯光，白天都有去处。',
+      content: '秋风起，雁南回。愿诸君夜间皆有星光，白日自有烟火。',
       imgs: [], likes: ['u_jyz']
     }
   ];
@@ -607,21 +602,21 @@ function baseState() {
     version: 2, registered: false, me: null, users, posts,
     rules: DEFAULT_RULES,
     signups: [{
-      id: 's_1', title: '本周帮战接龙 · 清平乐出战名单', creatorId: null, creatorName: '清平乐·司礼',
+      id: 's_1', title: '本周帮战接龙 · 清平乐欺负全服名单', creatorId: null, creatorName: '清平乐·司礼',
       pinned: true, createdAt: now - 5 * 3600000, expiresAt: now + 19 * 3600000, closed: false,
       entries: [
-        { uid: 'u_jyz', name: '云舟', time: now - 4 * 3600000, note: '先锋' },
-        { uid: 'u_jin', name: '槿', time: now - 3 * 3600000, note: '后排' },
-        { uid: 'u_huan', name: '寰', time: now - 2 * 3600000, note: '策应' }
+        { uid: 'u_jyz', name: '大雪', time: now - 4 * 3600000, note: '熹微' },
+        { uid: 'u_jin', name: '中雪', time: now - 3 * 3600000, note: '珞霞' },
+        { uid: 'u_huan', name:'小雪', time: now - 2 * 3600000, note: '寰珮' }
       ]
     }],
     polls: [{
       id: 'v_1', title: '下月帮会活动，你想去哪儿？', creatorId: null, creatorName: '清平乐·司礼',
       pinned: true, anonymous: false, createdAt: now - 6 * 3600000, expiresAt: now + 18 * 3600000,
       closed: false, options: [
-        { text: '夜游江南水乡', votes: ['u_jyz', 'u_hf', 'u_dm'] },
-        { text: '山中露营赏星', votes: ['u_jin', 'u_huan'] },
-        { text: '线上诗词雅集', votes: ['u_qing', 'u_tingxue', 'u_muyu'] }
+        { text: '黄昏欺负全服', votes: ['u_jyz', 'u_hf', 'u_dx'] },
+        { text: '落日全服欺负', votes: ['u_jin', 'u_zx'] },
+        { text: '线上诗词雅集', votes: ['u_qing', 'u_xx', 'u_muyu'] }
       ]
     }],
     stats: [{
@@ -634,10 +629,10 @@ function baseState() {
     notices: [{
       id: 'n_1', authorId: null, authorName: '清平乐·司礼', pinned: true, published: true,
       time: now - 26 * 3600000, publishAt: null,
-      content: '【开帮公告】\n清平乐自今日起，一应事务由即任大当家定夺。\n接龙必实名、投票可匿名、统计每日一填。愿诸君在此，各得一段醉清欢。',
+      content: '【开帮公告】\n清平乐自11月28日起，一应事务由即任大当家定夺。\n接龙必实名、投票可匿名、统计每日一填。愿诸君在此，各得一段醉清欢。',
       imgs: []
     }],
-    groups: [], groupMsgs: {}, dm: {}, reqs: [],
+    groups: [], groupMsgs: {}, dm: {}, reqs: [], flyflowers: [], rolesV: 0,
     visits, likes, seq: 0
   };
 }
@@ -648,7 +643,7 @@ function boot() {
   if (!state.users) state = baseState();
 
   // 兼容旧数据：更新清平准则；移除本人置顶的「开帮」欢迎公告
-  const OLD_RULE_HEAD = '一、清平乐者，以清为骨';
+  const OLD_RULE_HEAD = '一、芝兰同室，君子同芳';
   if (!state.rules || String(state.rules).indexOf(OLD_RULE_HEAD) === 0) {
     state.rules = DEFAULT_RULES;
   }
@@ -657,12 +652,458 @@ function boot() {
       n.content = n.content.replace('由群主与管理员共议', '由即任大当家定夺');
     }
   });
+  if (!Array.isArray(state.flyflowers)) state.flyflowers = [];
+  if (state.rolesV == null) state.rolesV = 0;
+  normalizeRoles();
   if (state.me) {
     const before = state.notices.length;
     state.notices = state.notices.filter(n =>
       !(n.pinned && n.authorId === state.me && String(n.content || '').indexOf('【清平乐·开帮】') === 0));
     if (state.notices.length !== before) saveState();
   }
+}
+
+/* ================= 云同步（Supabase 实时） =================
+   没填 url/key 时自动退回「本机存储」模式，功能不受影响。
+   填入 Supabase 项目地址与 anon key 后，所有成员共享同一份数据，
+   动态、聊天、接龙、投票等改动会在几百毫秒内推送到其他人手机上。 */
+const CLOUD = Object.assign(
+  { url: '', key: '' },
+  (typeof window !== 'undefined' && window.QLZ_CLOUD) || {},
+  (() => { try { return JSON.parse(localStorage.getItem('qlz_cloud') || '{}'); } catch (e) { return {}; } })()
+);
+const cloudOn = () => !!(CLOUD.url && CLOUD.key);
+
+const SYNC_ARR = ['users', 'posts', 'signups', 'polls', 'stats', 'notices', 'groups', 'reqs', 'flyflowers'];
+const SYNC_MSG = ['groupMsgs', 'dm'];
+const DB = { ready: false, last: null, rev: null, channel: null, sb: null, busy: false, timer: null, poll: null, lastEvent: 0 };
+let cloudReady = Promise.resolve();
+
+/* ---------- 本机身份 ---------- */
+function getDevice() {
+  let d = localStorage.getItem('qlz_device');
+  if (!d) { d = 'dev_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 9); localStorage.setItem('qlz_device', d); }
+  return d;
+}
+function getUid() { return localStorage.getItem('qlz_uid') || null; }
+function hadReg() { return localStorage.getItem('qlz_reg') === '1'; }
+function setUid(id) {
+  if (id) { localStorage.setItem('qlz_uid', id); localStorage.setItem('qlz_reg', '1'); state.me = id; state.regUid = id; state.registered = true; }
+  else { localStorage.removeItem('qlz_uid'); state.me = null; }
+}
+
+function normalizeDoc(doc) {
+  ['users', 'posts', 'signups', 'polls', 'stats', 'notices', 'groups', 'reqs', 'flyflowers'].forEach(k => { if (!Array.isArray(doc[k])) doc[k] = []; });
+  ['groupMsgs', 'dm', 'visits', 'likes'].forEach(k => { if (!doc[k] || typeof doc[k] !== 'object') doc[k] = {}; });
+  if (!doc.rules) doc.rules = (typeof DEFAULT_RULES !== 'undefined' ? DEFAULT_RULES : '');
+  if (doc.rolesV == null) doc.rolesV = 0;
+  return doc;
+}
+
+/* ---------- 增量补丁 ---------- */
+function snapshot() {
+  const o = {};
+  SYNC_ARR.forEach(k => o[k] = state[k] || []);
+  SYNC_MSG.forEach(k => o[k] = state[k] || {});
+  o.visits = state.visits || {};
+  o.likes = state.likes || {};
+  o.rules = state.rules || '';
+  o.rolesV = state.rolesV || 0;
+  return JSON.parse(JSON.stringify(o));
+}
+
+function diffArr(a, b) {
+  const am = new Map((a || []).map(x => [x.id, x]));
+  const bm = new Map((b || []).map(x => [x.id, x]));
+  const u = [], d = [];
+  (b || []).forEach(x => { const old = am.get(x.id); if (!old || JSON.stringify(old) !== JSON.stringify(x)) u.push(x); });
+  (a || []).forEach(x => { if (!bm.has(x.id)) d.push(x.id); });
+  return { u, d };
+}
+
+function diffDoc(prev, next) {
+  const p = {};
+  SYNC_ARR.forEach(k => {
+    const r = diffArr(prev[k], next[k]);
+    if (r.u.length || r.d.length) { p.c = p.c || {}; p.c[k] = r; }
+  });
+  SYNC_MSG.forEach(k => {
+    const a = prev[k] || {}, b = next[k] || {};
+    const convs = new Set(Object.keys(a).concat(Object.keys(b)));
+    convs.forEach(c => {
+      const r = diffArr(a[c], b[c]);
+      if (r.u.length || r.d.length) {
+        p.m = p.m || {};
+        p.m[k] = p.m[k] || {};
+        p.m[k][c] = r;
+      }
+    });
+  });
+  ['visits', 'likes'].forEach(k => {
+    const a = prev[k] || {}, b = next[k] || {};
+    Object.keys(b).forEach(dt => {
+      Object.keys(b[dt]).forEach(uid => {
+        if ((a[dt] || {})[uid] !== b[dt][uid]) {
+          p.v = p.v || {};
+          p.v[k] = p.v[k] || {};
+          p.v[k][dt] = p.v[k][dt] || {};
+          p.v[k][dt][uid] = b[dt][uid];
+        }
+      });
+    });
+  });
+  const sc = {};
+  if (prev.rules !== next.rules) sc.rules = next.rules;
+  if (prev.rolesV !== next.rolesV) sc.rolesV = next.rolesV;
+  if (Object.keys(sc).length) p.s = sc;
+  return p;
+}
+
+function hasPatch(p) {
+  return !!(p && ((p.c && Object.keys(p.c).length) || (p.m && Object.keys(p.m).length) ||
+    (p.v && Object.keys(p.v).length) || p.s));
+}
+
+function mergeArr(cur, r) {
+  let arr = (cur || []).slice();
+  if (r.d && r.d.length) { const dels = new Set(r.d); arr = arr.filter(x => !dels.has(x.id)); }
+  (r.u || []).forEach(item => {
+    const i = arr.findIndex(x => x.id === item.id);
+    if (i > -1) arr[i] = item; else arr.push(item);
+  });
+  return arr;
+}
+
+function applyPatchTo(doc, p) {
+  if (!p) return doc;
+  normalizeDoc(doc);
+  Object.keys(p.c || {}).forEach(k => { doc[k] = mergeArr(doc[k], p.c[k]); });
+  Object.keys(p.m || {}).forEach(k => {
+    doc[k] = doc[k] || {};
+    Object.keys(p.m[k]).forEach(c => { doc[k][c] = mergeArr(doc[k][c], p.m[k][c]); });
+  });
+  Object.keys(p.v || {}).forEach(k => {
+    doc[k] = doc[k] || {};
+    Object.keys(p.v[k]).forEach(dt => {
+      doc[k][dt] = doc[k][dt] || {};
+      Object.assign(doc[k][dt], p.v[k][dt]);
+    });
+  });
+  if (p.s) Object.assign(doc, p.s);
+  return doc;
+}
+
+/* ---------- 网络 ---------- */
+function cloudHeaders(extra) {
+  return Object.assign({
+    apikey: CLOUD.key,
+    Authorization: 'Bearer ' + CLOUD.key,
+    'Content-Type': 'application/json'
+  }, extra || {});
+}
+
+async function restGet(path) {
+  const r = await fetch(CLOUD.url + path, { headers: cloudHeaders(), cache: 'no-store' });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}
+
+async function rpcPatch(p) {
+  const r = await fetch(CLOUD.url + '/rest/v1/rpc/qlz_apply_patch', {
+    method: 'POST', headers: cloudHeaders(),
+    body: JSON.stringify({ p })
+  });
+  if (!r.ok) throw new Error('RPC ' + r.status);
+  return r.json();
+}
+
+let syncTimer = null;
+function queueSync() {
+  if (!cloudOn() || !DB.ready) return;
+  clearTimeout(syncTimer);
+  syncTimer = setTimeout(flushPatch, 250);
+}
+
+async function flushPatch() {
+  if (!DB.ready) return;
+  if (DB.busy) { clearTimeout(syncTimer); syncTimer = setTimeout(flushPatch, 300); return; }
+  const next = snapshot();
+  const p = diffDoc(DB.last || {}, next);
+  if (!hasPatch(p)) return;
+  DB.busy = true;
+  try {
+    await rpcPatch(p);
+    DB.last = next;
+    DB.lastEvent = Date.now();
+    if (DB.channel && DB.channel.send) {
+      try { await DB.channel.send({ type: 'broadcast', event: 'patch', payload: p }); } catch (e) { }
+    }
+  } catch (e) {
+    console.warn('[云同步] 推送失败，稍后重试', e);
+  } finally {
+    DB.busy = false;
+    // 推送期间如有新改动，补一次，保证不丢
+    try { if (hasPatch(diffDoc(DB.last || {}, snapshot()))) queueSync(); } catch (e) { }
+  }
+}
+
+function onRemotePatch(p) {
+  try {
+    applyPatchTo(state, p);
+    if (DB.last) applyPatchTo(DB.last, p);
+    DB.lastEvent = Date.now();
+    persistLocal();
+    if (state.me && me()) {
+      softRender();
+      if (typeof chatCtx !== 'undefined' && chatCtx) renderChat();
+    }
+  } catch (e) { console.warn('[云同步] 应用补丁失败', e); }
+}
+
+/* 正在输入时不重绘，避免打断填写 */
+let renderRetry = null;
+function softRender() {
+  const el = document.activeElement;
+  const typing = el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT');
+  if (typing) {
+    clearTimeout(renderRetry);
+    renderRetry = setTimeout(() => { if (state.me) softRender(); }, 1200);
+    return;
+  }
+  renderAll();
+}
+
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
+}
+
+async function startRealtime() {
+  try {
+    if (!window.supabase) await loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2');
+    if (!window.supabase) return;
+    DB.sb = window.supabase.createClient(CLOUD.url, CLOUD.key);
+    const ch = DB.sb.channel('qlz-room');
+    ch.on('broadcast', { event: 'patch' }, msg => {
+      if (msg && msg.payload) onRemotePatch(msg.payload);
+    });
+    ch.subscribe();
+    DB.channel = ch;
+  } catch (e) {
+    console.warn('[云同步] 实时通道不可用，改用轮询', e);
+  }
+}
+
+async function pullDoc(rev) {
+  const rows = await restGet('/rest/v1/qlz_state?id=eq.main&select=doc');
+  const doc = rows && rows[0] && rows[0].doc;
+  if (!doc || !doc.users) return;
+  const auth = localAuth();
+  // 服务端还没同步到我的账号时，保留本机数据，避免误退出
+  if (auth.me && !doc.users.some(x => x.id === auth.me || x.deviceId === getDevice())) return;
+  state = normalizeDoc(Object.assign(doc, auth));
+  const u = state.users.find(x => x.id === auth.me) || state.users.find(x => x.deviceId === getDevice());
+  if (u) setUid(u.id); else { state.me = null; }
+  DB.last = snapshot();
+  DB.rev = rev;
+  persistLocal();
+}
+
+async function pollOnce(force) {
+  if (!DB.ready) return;
+  try {
+    await flushPatch();
+    const rows = await restGet('/rest/v1/qlz_state?id=eq.main&select=updated_at');
+    const rev = rows && rows[0] && rows[0].updated_at;
+    if (!rev) return;
+    if (rev === DB.rev && !force) return;
+    const quiet = Date.now() - (DB.lastEvent || 0);
+    if (!force && quiet < 12000) { DB.rev = rev; return; }  // 实时通道已在工作，不必整包重拉
+    await pullDoc(rev);
+    if (state.me && me()) { softRender(); if (typeof chatCtx !== 'undefined' && chatCtx) renderChat(); }
+  } catch (e) { /* 断网时静默 */ }
+}
+
+function localAuth() {
+  return {
+    me: getUid(),
+    registered: hadReg() || !!getUid(),
+    regUid: getUid(),
+    visitOnce: (state && state.visitOnce) || {}
+  };
+}
+
+async function cloudInit() {
+  try {
+    const rows = await restGet('/rest/v1/qlz_state?id=eq.main&select=doc,updated_at');
+    const row = rows && rows[0];
+    const doc = row && row.doc;
+    // 旧版本把账号只存在本机：首次接入云端时把本人账号补进云端，避免「被清号」
+    if (doc && doc.users && doc.users.length && hadReg()) {
+      const myId = getUid();
+      const localMe = (state.users || []).find(x => x.id === myId);
+      if (localMe && !doc.users.some(x => x.id === localMe.id || (localMe.deviceId && x.deviceId === localMe.deviceId))) {
+        localMe.deviceId = getDevice();
+        doc.users.push(localMe);
+      }
+    }
+    if (doc && doc.users && doc.users.length) {
+      state = normalizeDoc(Object.assign(doc, localAuth()));
+      const u = state.users.find(x => x.id === getUid()) || state.users.find(x => x.deviceId === getDevice());
+      if (u) setUid(u.id); else { state.me = null; state.regUid = null; }
+    } else {
+      state = Object.assign(state, localAuth());
+    }
+    DB.rev = row ? row.updated_at : null;
+    DB.last = (doc && doc.users && doc.users.length) ? snapshot() : {};
+    DB.ready = true;
+    persistLocal();
+    if (!doc || !doc.users || !doc.users.length) queueSync(); // 首次建库：把种子数据写上去
+    startRealtime();
+    if (DB.poll) clearInterval(DB.poll);
+    DB.poll = setInterval(() => pollOnce(false), 5000);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && DB.ready) { pollOnce(true); }
+    });
+    setTimeout(() => pollOnce(true), 1000);
+  } catch (e) {
+    console.warn('[云同步] 初始化失败，切换本地模式', e);
+    DB.ready = false;
+    setTimeout(() => { toast('云同步未连接，当前为本机模式'); }, 1800);
+  }
+}
+
+/* ---------- 上传图片 / 音频到云端 ---------- */
+async function cloudUpload(dataUrl, kind, filename) {
+  const blob = await (await fetch(dataUrl)).blob();
+  let ext = 'bin';
+  const m = blob.type || '';
+  if (m.indexOf('png') > -1) ext = 'png';
+  else if (m.indexOf('webp') > -1) ext = 'webp';
+  else if (m.indexOf('jpeg') > -1 || m.indexOf('jpg') > -1) ext = 'jpg';
+  else if (m.indexOf('mpeg') > -1 || m.indexOf('mp3') > -1) ext = 'mp3';
+  else if (m.indexOf('wav') > -1) ext = 'wav';
+  else if (m.indexOf('ogg') > -1) ext = 'ogg';
+  else if (m.indexOf('m4a') > -1 || m.indexOf('mp4') > -1) ext = 'm4a';
+  const name = kind + '/' + getDevice() + '-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7) + '.' + ext;
+  const r = await fetch(CLOUD.url + '/storage/v1/object/qlz/' + name, {
+    method: 'POST',
+    headers: { apikey: CLOUD.key, Authorization: 'Bearer ' + CLOUD.key, 'Content-Type': blob.type || 'application/octet-stream', 'x-upsert': 'true' },
+    body: blob
+  });
+  if (!r.ok) throw new Error('上传失败 ' + r.status);
+  return CLOUD.url + '/storage/v1/object/public/qlz/' + name;
+}
+
+
+/* 云同步配置面板 */
+function cloudConfig() {
+  const on = cloudOn();
+  openModal(`<h3>云同步设置</h3>
+    <p class="hint" style="margin:6px 0 12px">全部用户共用同一套云端。填入 Supabase 的 Project URL 与 anon key 后，各位的手机即可实时互通。</p>
+    <input class="ta" id="cfUrl" style="height:44px" placeholder="https://xxxx.supabase.co" value="${on ? CLOUD.url : ''}">
+    <input class="ta" id="cfKey" style="height:44px;margin-top:8px" placeholder="anon public key" value="${on ? CLOUD.key : ''}">
+    <div class="hint" style="margin-top:8px">当前状态：${on ? '已配置 · ' + CLOUD.url.replace(/https?:\/\//, '') : '未配置（本机单机模式）'}</div>
+    <div class="row mt8"><button class="btn btn-mini btn-ghost" onclick="clearCloud()">清除配置</button></div>
+    <div class="row mt8" style="gap:8px"><button class="btn" onclick="saveCloud()">保存并重启</button><button class="btn btn-ghost" onclick="closeModal()">取消</button></div>`);
+}
+function saveCloud() {
+  const u = (($('#cfUrl') || {}).value || '').trim().replace(/\/+$/, '');
+  const k = (($('#cfKey') || {}).value || '').trim();
+  if (!u || !k) return toast('URL 与 key 都要填');
+  localStorage.setItem('qlz_cloud', JSON.stringify({ url: u, key: k }));
+  closeModal(); toast('已保存，正在重启');
+  setTimeout(() => location.reload(), 800);
+}
+function clearCloud() {
+  localStorage.removeItem('qlz_cloud');
+  closeModal(); toast('已清除，恢复本机模式');
+  setTimeout(() => location.reload(), 800);
+}
+
+
+/* ---------- 角色整顿：只留季云知一位开发者 ---------- */
+function normalizeRoles() {
+  if (!state.users || !state.users.length) return;
+  if (state.rolesV >= 2) return;
+  const dev = state.users.find(u => u.name === '季云知') || state.users.find(u => u.role === 'developer');
+  state.users.forEach(u => { u.role = (dev && u.id === dev.id) ? 'developer' : 'member'; });
+  state.rolesV = 2;
+  if (typeof persistLocal === 'function') persistLocal();
+  if (typeof queueSync === 'function') queueSync();
+}
+
+/* ---------- 飞花令 ---------- */
+const FLY_CHARS = ['花', '月', '风', '雪', '酒', '春', '夜', '山', '水', '云', '柳', '秋'];
+function flyChar() {
+  const n = Math.floor(new Date().setHours(0, 0, 0, 0) / 86400000);
+  return FLY_CHARS[((n % FLY_CHARS.length) + FLY_CHARS.length) % FLY_CHARS.length];
+}
+function flyList() {
+  const d = ymd();
+  return (state.flyflowers || []).filter(f => f.day === d).sort((a, b) => a.time - b.time);
+}
+function renderFly() {
+  const ch = flyChar(), d = ymd();
+  const list = flyList();
+  const mine = list.find(f => f.uid === state.me);
+  const m = me();
+  let html = `<div class="card">
+    <div class="card-title"><span class="bar"></span>飞花令<span class="tag">今日令字「${ch}」· 皆可参与</span></div>
+    <p class="hint">以「${ch}」字起兴，写一句含「${ch}」的诗。每人每日一令，落定不改。</p>
+    <div style="text-align:center;margin:12px 0 6px">
+      <div style="display:inline-flex;align-items:center;justify-content:center;width:64px;height:64px;border:1px solid rgba(168,71,60,.35);border-radius:10px;background:rgba(168,71,60,.06);color:var(--cinnabar);font-size:28px;letter-spacing:0">${ch}</div>
+    </div>`;
+  if (!m) html += `</div>`;
+  else if (mine) {
+    html += `<div class="summary" style="margin-top:10px">你今日已落令：${esc(mine.text)}</div>
+      <div class="row mt8"><button class="btn btn-mini btn-ghost" onclick="delFly('${mine.id}')">撤回重写</button></div></div>`;
+  } else {
+    html += `<input class="inp mt8" id="flyInput" placeholder="一句含「${ch}」的诗，例如：${ch === '花' ? '花自飘零水自流' : ch + '……'}" maxlength="40">
+      <button class="btn btn-primary mt8" onclick="addFly()">落这一令</button></div>`;
+  }
+  html += `<div class="card">
+    <div class="card-title"><span class="bar"></span>今日令榜<span class="tag">${list.length} 人已落令 · ${d}</span></div>`;
+  if (!list.length) html += `<div class="empty">今日尚无令，等你起头。</div>`;
+  else {
+    html += `<div style="display:flex;flex-direction:column;gap:8px">`;
+    list.forEach((f, i) => {
+      const u = userById(f.uid) || { name: f.name };
+      html += `<div style="display:flex;gap:9px;align-items:flex-start;padding:9px 10px;border-radius:10px;background:rgba(47,93,80,.05);border:1px solid rgba(47,93,80,.12)">
+        <div class="board-rank" style="background:linear-gradient(180deg,#8aa79b,#5f7f73)">${i + 1}</div>
+        <img src="${avatarOf(u)}" style="width:24px;height:24px;border-radius:50%">
+        <div style="flex:1;min-width:0"><div style="font-size:12.5px;color:var(--jade)">${esc(f.name)}</div>
+        <div style="font-size:13px;line-height:1.7;margin-top:2px">${esc(f.text)}</div></div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+  const y = (state.flyflowers || []).filter(f => f.day === ymd(dayShift(-1)));
+  if (y.length) html += `<div class="meta" style="margin-top:10px">昨日 ${y.length} 人落令，共得 ${y.length} 句。</div>`;
+  html += `</div>`;
+  return html;
+}
+function addFly() {
+  const m = me(); if (!m) return;
+  const ch = flyChar(), d = ymd();
+  if ((state.flyflowers || []).some(f => f.uid === m.id && f.day === d)) return toast('今日你已落令，明日再来');
+  const el = $('#flyInput'); const t = ((el && el.value) || '').trim();
+  if (!t) return toast('写一句带「' + ch + '」的诗');
+  if (t.indexOf(ch) < 0) return toast('这一句里要有「' + ch + '」字');
+  if (t.length > 40) return toast('一句就好，别太长');
+  state.flyflowers = state.flyflowers || [];
+  state.flyflowers.unshift({ id: uid('f'), day: d, uid: m.id, name: m.name, text: t, time: Date.now() });
+  saveState(); renderPoem(); toast('已落令：' + t);
+}
+function delFly(id) {
+  const m = me(); if (!m) return;
+  const f = (state.flyflowers || []).find(x => x.id === id); if (!f) return;
+  if (f.uid !== m.id && !isAdmin(m)) return toast('只能撤回自己的');
+  state.flyflowers = state.flyflowers.filter(x => x.id !== id);
+  saveState(); renderPoem(); toast('已撤回，可再落一令');
 }
 
 /* ---------- 当前用户 ---------- */
@@ -741,8 +1182,18 @@ function pickImage(cb, maxW = 1200) {
   p.value = '';
   p.onchange = async () => {
     const f = p.files[0]; if (!f) return;
-    try { toast('图片处理中…'); cb(await compress(f, maxW, 0.84)); }
-    catch (e) { toast('图片读取失败'); }
+    try {
+      toast('图片知处理中…');
+      const cloud = typeof cloudOn === 'function' && cloudOn();
+      // 未接云端时本机容量有限，九图自动降到 1280 以保证存得下
+      const d = await compress(f, cloud ? maxW : Math.min(maxW, 1280), cloud ? 0.86 : 0.8);
+      let out = d;
+      if (typeof cloudOn === 'function' && cloudOn()) {
+        try { out = await cloudUpload(d, 'img', 'p.jpg'); } catch (e) { out = d; }
+      }
+      cb(out);
+    }
+    catch (e) { toast('图片知读取失败'); }
   };
   p.click();
 }
@@ -751,9 +1202,17 @@ function pickAudio(cb) {
   p.value = '';
   p.onchange = () => {
     const f = p.files[0]; if (!f) return;
-    if (f.size > 2.6 * 1024 * 1024) { toast('音频请小于 2.6MB（本地存储有限）'); return; }
+    if (f.size > 25 * 1024 * 1024) { toast('音频请小于 25MB（多了真的跑不动了的，本知看了看，以飞雪玉花为例，近四分半，是22.59MB，其余的天地缓缓之类，四分半只要7.61MB，我尽量优化，若连上云端后，会好些，我会放宽这一频率的。）'); return; }
+    if (f.size > 3 * 1024 * 1024 && !(typeof cloudOn === 'function' && cloudOn())) { toast('这段音频较大，本机存不住，先到「个人设置 → 云端」配好云同步再传'); return; }
     const fr = new FileReader();
-    fr.onload = () => cb(fr.result, f.name);
+    fr.onload = async () => {
+      let out = fr.result;
+      if (typeof cloudOn === 'function' && cloudOn()) {
+        try { out = await cloudUpload(out, 'audio', f.name || 'a.mp3'); }
+        catch (e) { if (f.size > 3 * 1024 * 1024) { toast('这段音频传云端失败，本机也存不住，请检查网络后再试'); return; } out = fr.result; }
+      }
+      cb(out, f.name);
+    };
     fr.readAsDataURL(f);
   };
   p.click();
@@ -765,12 +1224,16 @@ function showSplash() {
   const splash = $('#splash');
   if (u && u.splash) { splash.style.backgroundImage = `url(${u.splash})`; }
   splash.classList.remove('fade');
-  setTimeout(() => {
+  const go = () => {
     splash.classList.add('fade');
     setTimeout(() => {
       if (state.me && me()) enterApp(); else showAuth();
     }, 300);
-  }, 1500);
+  };
+  const wait = (typeof cloudReady !== 'undefined' && cloudReady && cloudReady.then)
+    ? cloudReady.catch(() => { })
+    : Promise.resolve();
+  Promise.race([wait, new Promise(r => setTimeout(r, 4500))]).then(go);
 }
 function showAuth() {
   $('#app').classList.add('hidden');
@@ -779,7 +1242,7 @@ function showAuth() {
   const reg = state.registered;
   $('#authNote').innerHTML = reg
     ? `本设备已注册账号「${esc((me() || state.users.find(u => u.id === state.regUid) || {}).name || '')}」。<br>请用微信登录继续，本帮会不发小号。`
-    : `本设备仅可注册一个账号，一经注册不可再开小号。<br>首次登录即自动注册，并成为本帮会「开发者」。`;
+    : `本设备仅可注册一个账号，一经注册不可再开小号。<br>季云知，成为本帮会「开发者」。`;
   $('#btnWechat').textContent = reg ? '微信登录' : '微信一键注册登录';
   auth.classList.remove('hidden');
 }
@@ -795,7 +1258,7 @@ function wechatFlow() {
       <button class="btn btn-wechat" id="wxOk">允许</button></div></div>`);
     $('#wxOk').onclick = () => {
       closeModal();
-      state.me = state.regUid;
+      if (typeof setUid === 'function') setUid(state.regUid); else state.me = state.regUid;
       saveState();
       toast('欢迎回来，' + me().name);
       enterApp();
@@ -830,25 +1293,36 @@ function wechatFlow() {
 function register(name, avatar) {
   const id = 'u_me_' + Date.now().toString(36);
   const u = {
-    id, name, sig: '初来清平，愿得清欢。', avatar: avatar || svgAvatar(name),
+    id, name, sig: '春风不止，清平不散。', avatar: avatar || svgAvatar(name),
     bg: null, music: null, splash: null, chatBg: null, chatMusic: null,
-    role: 'developer', friends: [], createdAt: Date.now(), visitsTotal: 0,
+    role: 'member', friends: [], createdAt: Date.now(), visitsTotal: 0,
     wxId: 'wx_' + id, wxName: name
   };
+  // 只有「季云知」是开发者，其他人一律为成员
+  if (name.trim() === '季云知') u.role = 'developer';
+  if (typeof getDevice === 'function') u.deviceId = getDevice();
   state.users.push(u);
   state.me = id; state.registered = true; state.regUid = id;
+  if (typeof setUid === 'function') setUid(id);
 
-  // 默认进入大群聊
-  const all = state.users.map(x => x.id);
-  state.groups.unshift({
-    id: 'g_main', name: '清平乐·大群聊', isMain: true, members: all,
-    ownerId: id, createdAt: Date.now()
-  });
-  state.groupMsgs['g_main'] = [
-    { id: uid('m'), type: 'sys', text: `「${name}」加入了清平乐大群聊`, time: Date.now() - 60000 },
-    { id: uid('m'), from: 'u_jyz', text: '欢迎新朋友。既入清平，便是一家人。', time: Date.now() - 50000 },
-    { id: uid('m'), from: 'u_hf', text: '来了就好，先去看看今日诗词罢。', time: Date.now() - 40000 }
-  ];
+  // 默认进入大群聊（已有则加入，没有则创建）
+  const mainG = state.groups.find(g => g.isMain);
+  if (mainG) {
+    if (!mainG.members.includes(id)) mainG.members.push(id);
+    state.groupMsgs[mainG.id] = state.groupMsgs[mainG.id] || [];
+    state.groupMsgs[mainG.id].push({ id: uid('m'), type: 'sys', text: `「${name}」加入了清平乐醉清欢`, time: Date.now() });
+  } else {
+    const all = state.users.map(x => x.id);
+    state.groups.unshift({
+      id: 'g_main', name: '清平乐·醉清欢', isMain: true, members: all,
+      ownerId: id, createdAt: Date.now()
+    });
+    state.groupMsgs['g_main'] = [
+      { id: uid('m'), type: 'sys', text: `「${name}」加入了清平乐醉清欢`, time: Date.now() - 60000 },
+      { id: uid('m'), from: 'u_jyz', text: '今夕可否为春？', time: Date.now() - 50000 },
+      { id: uid('m'), from: 'u_hf', text: '今雨可为故雨？', time: Date.now() - 40000 }
+    ];
+  }
 
   // 好友申请演示
   state.reqs.unshift(
@@ -1288,7 +1762,7 @@ function createNotice() {
     $('#noticeImgs').innerHTML = imgs.map((s, i) => `<div class="thumb"><img src="${s}"><span onclick="window.__nImgDel(${i})">×</span></div>`).join('');
   };
   window.__nImgDel = i => { imgs.splice(i, 1); drawImgs(); };
-  $('#noticeImgBtn').onclick = () => pickImage(d => { if (imgs.length >= 6) return toast('最多 6 张'); imgs.push(d); drawImgs(); }, 900);
+  $('#noticeImgBtn').onclick = () => pickImage(d => { if (imgs.length >= 9) return toast('最多 9 张'); imgs.push(d); drawImgs(); }, 1600);
 }
 function toggleNoticePin(id) {
   const n = state.notices.find(x => x.id === id); if (!n) return;
@@ -1318,7 +1792,7 @@ function renderMoments() {
   </div>`;
 
   const list = state.posts.slice().sort((a, b) => b.time - a.time);
-  if (!list.length) html += `<div class="empty">轩中尚无花影，等你第一笔。</div>`;
+  if (!list.length) html += `<div class="empty">轩中尚无百花影，何妨信手醉春风。</div>`;
   list.forEach(p => {
     const u = userById(p.uid) || { name: '故人', id: p.uid };
     const liked = p.likes.includes(m.id);
@@ -1344,7 +1818,7 @@ function renderMoments() {
 }
 function addDraftImg() {
   if (draftImgs.length >= 9) return toast('最多 9 张');
-  pickImage(d => { draftImgs.push(d); renderMoments(); }, 1000);
+  pickImage(d => { draftImgs.push(d); renderMoments(); }, 1600);
 }
 function delDraftImg(i) { draftImgs.splice(i, 1); renderMoments(); }
 function publishPost() {
@@ -1380,7 +1854,6 @@ function viewImage(id) {
   const p = state.posts.find(x => x.id === id); if (!p) return;
   openModal(`<div style="-webkit-overflow-scrolling:touch">${p.imgs.map(s => `<img src="${s}" style="width:100%;border-radius:10px;margin-bottom:8px">`).join('')}</div>
     <button class="btn btn-ghost mt8" onclick="closeModal()">收起</button>`);
-  if (u.music) playProfileMusic(u.music);
 }
 
 /* ---------- 蝶梦袅袅：每日诗词 ---------- */
@@ -1401,6 +1874,7 @@ function renderPoem() {
     <div class="poem-appr"><b>赏析</b><br>${esc(p.p)}</div>
     <div class="meta" style="text-align:right;margin-top:12px">每日 05:30 自动推送 · 今日已送达</div>
   </div>
+  ${renderFly()}
   <div class="card">
     <div class="card-title"><span class="bar"></span>近七日诗单<span class="tag">蝶梦袅袅</span></div>
     ${[0, 1, 2, 3, 4, 5, 6].map(o => {
@@ -1411,7 +1885,7 @@ function renderPoem() {
   }).join('')}
   </div>
   <div class="card" style="padding:12px 14px">
-    <p class="hint">此页只推送诗词与赏析，不设图片上传入口。图文只归于「花繁若轩」。</p>
+    <p class="hint">为保证清平乐可正常醉梦，此页只推送诗词与赏析，不设图片上传入口。图文只归于「花繁若轩」。</p>
   </div>`;
   $('#page-poem').innerHTML = html;
 }
@@ -1434,7 +1908,7 @@ function renderFriends() {
   const others = state.users.filter(u => u.id !== m.id);
 
   let html = `<div class="card" style="padding:11px 14px;background:rgba(255,255,255,.7)">
-    <p class="hint">← 在本页向左滑动，可打开「个人设置」（头像、签名、主页背景、音乐、聊天背景与启动画面）。</p>
+    <p class="hint">← 在本页向左滑动，可打开「个人设置」（头像、签名、主页背景、音乐、聊天背景与启动画面，启动画面可自定义为噜噜视频，桀桀桀）。</p>
   </div>`;
 
   html += `<div class="card">
@@ -1525,7 +1999,7 @@ function decideReq(rid, yes) {
 }
 function processNpcReqs() {
   let changed = false;
-  const npcIds = state.users.filter(u => u.role === 'member' && u.id !== state.me).map(u => u.id);
+  const npcIds = state.users.filter(u => u.seedKey && u.id !== state.me).map(u => u.id);
   state.reqs.forEach(r => {
     if (r.status === 'pending' && npcIds.includes(r.to) && Date.now() - r.time > 6000) {
       r.status = 'accepted'; addFriends(r.from, r.to); changed = true;
@@ -1609,6 +2083,11 @@ function renderDrawer() {
     <p class="hint" style="margin-top:8px">聊天背景与音乐仅在本机生效，进入任一聊天即刻应用。</p>
   </div>
   <div class="set-group">
+    <h4>云端</h4>
+    <div class="set-line"><div class="lbl">云同步</div><div class="val">${CLOUD.url ? '已配置' : '未配置（本机）'}</div><button class="act" onclick="cloudConfig()">配置</button></div>
+    <p class="hint" style="margin-top:8px">全部成员填同一套云端后，动态与聊天即时互通。</p>
+  </div>
+  <div class="set-group">
     <h4>帮会</h4>
     <div class="set-line" onclick="closeDrawer();openProfile('${m.id}')"><div class="lbl">我的主页</div><div class="val">累计 ${m.visitsTotal || 0} 次访问</div><span class="chev">›</span></div>
     <div class="set-line" onclick="closeDrawer();openGroup('g_main')"><div class="lbl">大群聊</div><div class="val">${esc((state.groups.find(g => g.isMain) || {}).name || '')}</div><span class="chev">›</span></div>
@@ -1634,7 +2113,8 @@ function closeDrawer() {
 }
 function logout() {
   confirmBox('退出登录', '退出后可用微信重新登录，但本设备不可再注册新账号。', () => {
-    state.me = null; saveState();
+    if (typeof setUid === 'function') setUid(null); else state.me = null;
+    saveState();
     closeDrawer();
     $('#app').classList.add('hidden');
     showAuth();
@@ -1646,7 +2126,7 @@ function setAvatar() {
   pickImage(d => { me().avatar = d; saveState(); renderAll(); toast('头像已更换'); }, 320);
 }
 function setBg() {
-  pickImage(d => { me().bg = d; saveState(); renderAll(); toast('主页背景已更换'); }, 1200);
+  pickImage(d => { me().bg = d; saveState(); renderAll(); toast('主页背景已更换'); }, 1600);
 }
 let profileAudio = null;
 function playProfileMusic(src) {
@@ -1666,11 +2146,17 @@ function setMusic() {
 function removeMusic() {
   me().music = null; saveState(); renderAll(); toast('主页音乐已移除');
 }
+function setMusic() {
+  pickAudio((d, n) => { me().music = d; saveState(); renderAll(); toast('已设主页音乐：' + n); });
+}
+function removeMusic() {
+  me().music = null; saveState(); renderAll(); toast('主页音乐已移除');
+}
 function setSplash() {
-  pickImage(d => { me().splash = d; saveState(); renderAll(); toast('启动画面已更换，下次进入生效'); }, 1200);
+  pickImage(d => { me().splash = d; saveState(); renderAll(); toast('启动画面已更换，下次进入生效'); }, 1600);
 }
 function setChatBg() {
-  pickImage(d => { me().chatBg = d; saveState(); renderAll(); if (chatCtx) applyChatStyle(); toast('聊天背景已更换'); }, 1200);
+  pickImage(d => { me().chatBg = d; saveState(); renderAll(); if (chatCtx) applyChatStyle(); toast('聊天背景已更换'); }, 1600);
 }
 function setChatMusic() {
   pickAudio((d, n) => { me().chatMusic = d; saveState(); renderAll(); toast('已设聊天音乐：' + n); });
@@ -1985,7 +2471,7 @@ function wire() {
   });
   $('#chatImg').onclick = () => {
     if (!chatCtx) return;
-    pickImage(d => sendChatMsg('img', d), 500);
+    pickImage(d => sendChatMsg('img', d), 1400);
   };
   document.addEventListener('click', e => {
     if (e.target.id === 'rulesSave') saveRules();
@@ -2008,6 +2494,8 @@ function wire() {
 
 function init() {
   boot();
+  if (typeof cloudInit === 'function') cloudReady = cloudInit().then(() => { normalizeRoles(); softRenderSafe(); });
+  function softRenderSafe() { try { if (state.me && me()) renderAll(); } catch (e) { } }
   wire();
   showSplash();
   if (state.me && me()) {
@@ -2041,8 +2529,11 @@ function init() {
   window.setBg = setBg; window.setSplash = setSplash; window.setChatBg = setChatBg;
   window.setChatMusic = setChatMusic; window.logout = logout;
   window.switchTab = switchTab;
+  window.addFly = addFly; window.delFly = delFly;
+  window.setMusic = setMusic; window.removeMusic = removeMusic;
+  window.cloudConfig = cloudConfig; window.saveCloud = saveCloud; window.clearCloud = clearCloud;
 }
 init();
 </script>
 </body>
-</html>
+  </html>
