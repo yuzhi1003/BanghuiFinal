@@ -1,0 +1,46 @@
+name: Build Live APK
+on: [push, workflow_dispatch]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-java@v4
+      with:
+        distribution: 'zulu'
+        java-version: '17'
+    - name: Prepare Files
+      run: |
+        mkdir -p app/src/main/java/com/yuzhi/qingpingyue
+        echo 'buildscript { repositories { google(); mavenCentral() } dependencies { classpath "com.android.tools.build:gradle:8.1.0" } }' > build.gradle
+        echo 'rootProject.name = "QingPingYue"' > settings.gradle
+        echo 'include ":app"' >> settings.gradle
+        echo 'apply plugin: "com.android.application"' > app/build.gradle
+        echo 'android { namespace "com.yuzhi.qingpingyue" compileSdk 34 defaultConfig { applicationId "com.yuzhi.qingpingyue" minSdk 24 targetSdk 34 versionCode 5 versionName "5.0" } }' >> app/build.gradle
+        echo '<?xml version="1.0" encoding="utf-8"?>' > app/src/main/AndroidManifest.xml
+        echo '<manifest xmlns:android="http://schemas.android.com/apk/res/android">' >> app/src/main/AndroidManifest.xml
+        echo '<uses-permission android:name="android.permission.INTERNET" />' >> app/src/main/AndroidManifest.xml
+        echo '<application android:label="清平乐" android:theme="@android:style/Theme.NoTitleBar">' >> app/src/main/AndroidManifest.xml
+        echo '<activity android:name=".MainActivity" android:exported="true">' >> app/src/main/AndroidManifest.xml
+        echo '<intent-filter>' >> app/src/main/AndroidManifest.xml
+        echo '<action android:name="android.intent.action.MAIN" />' >> app/src/main/AndroidManifest.xml
+        echo '<category android:name="android.intent.category.LAUNCHER" />' >> app/src/main/AndroidManifest.xml
+        echo '</intent-filter>' >> app/src/main/AndroidManifest.xml
+        echo '</activity>' >> app/src/main/AndroidManifest.xml
+        echo '</application>' >> app/src/main/AndroidManifest.xml
+        echo '</manifest>' >> app/src/main/AndroidManifest.xml
+        echo 'package com.yuzhi.qingpingyue;' > app/src/main/java/com/yuzhi/qingpingyue/MainActivity.java
+        echo 'import android.app.Activity; import android.os.Bundle; import android.webkit.WebView; import android.webkit.WebSettings;' >> app/src/main/java/com/yuzhi/qingpingyue/MainActivity.java
+        echo 'public class MainActivity extends Activity { protected void onCreate(Bundle savedInstanceState) { super.onCreate(savedInstanceState); WebView webView = new WebView(this); WebSettings webSettings = webView.getSettings(); webSettings.setJavaScriptEnabled(true); webSettings.setDomStorageEnabled(true);' >> app/src/main/java/com/yuzhi/qingpingyue/MainActivity.java
+        echo 'webView.loadUrl("https://yuzhi1003.github.io/BanghuiFinal/?v=5");' >> app/src/main/java/com/yuzhi/qingpingyue/MainActivity.java
+        echo 'setContentView(webView); } }' >> app/src/main/java/com/yuzhi/qingpingyue/MainActivity.java
+    - name: Build with Gradle
+      run: |
+        gradle wrapper
+        chmod +x gradlew
+        ./gradlew assembleDebug
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: QingPingYue-Live-APK
+        path: app/build/outputs/apk/debug/app-debug.apk
